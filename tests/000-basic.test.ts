@@ -1,4 +1,10 @@
 
+
+import { Stack, initStack } from '../src/Stack'
+import { StateMachine, StateTransition } from '../src/Machine'
+import { Program, Opcode, Immediate, StackPointerMove, TapeHeadMove } from '../src/Bytecode'
+
+
 const STACK_SIZE = 16;
 const MAX_LOOPS  = 16;
 
@@ -7,48 +13,14 @@ const MAX_LOOPS  = 16;
 type Ticker = number; // counters
 type Index  = number; // indicies
 
-type StackPointerMove = 0 | 1 | -1 // we only have null/bin/un ops, so this works
-type TapeHeadMove     = number; // jumps (while finite) are expressed as numbers
-
-type Immediate = number    | null; // our machine only knows about numbers & null (ATM)
-type StackCell = Immediate | undefined; // the stack can have undefined cells
-
 const initTicker = () : Ticker  =>  0 as Ticker;
 const initIndex  = () : Index   => -1 as Index;
 
 // -----------------------------------------------------------------------------
 
-// NOTE:
-// this will need to be improved on later, but good for now
-type Stack = StackCell[];
-
-const initStack = (size : number) : Stack => Array(size).fill(undefined);
-
-// -----------------------------------------------------------------------------
-
-type Opcode = 'HALT' | 'BEGIN' | 'END' | 'ADD' | 'PUSH'
-
-type Bytecode = [ Opcode, Immediate, StackPointerMove, TapeHeadMove ];
-
-class Program {
-    public code : Bytecode[];
-
-    constructor(...code : Bytecode[]) {
-        this.code = code;
-    }
-
-    get length () : number { return this.code.length }
-
-    at (index : number) : Bytecode {
-        return this.code[index] as Bytecode;
-    }
-}
-
-// -----------------------------------------------------------------------------
-
 type MachineState = 'HALT' | 'SCAN'
 
-class MachineTransition {
+class MachineTransition implements StateTransition {
     constructor(
         public state : MachineState, // next state
         public ip    : Index,        // next instruction pointer
@@ -67,7 +39,7 @@ class MachineTransition {
     }
 }
 
-class TapeTransition {
+class TapeTransition implements StateTransition {
     constructor(
         public opcode    : Opcode,
         public data      : Immediate | null,
@@ -86,7 +58,7 @@ class TapeTransition {
 
 // -----------------------------------------------------------------------------
 
-class ProgramMachine {
+class ProgramMachine implements StateMachine<MachineTransition, TapeTransition> {
     public state   : MachineState;
     public tick    : Ticker;
     public program : Program;
@@ -114,7 +86,7 @@ class ProgramMachine {
     }
 }
 
-class TapeMachine {
+class TapeMachine implements StateMachine<TapeTransition, MachineTransition> {
     public ic    : Ticker;
     public ip    : Index;
     public sp    : Index;
