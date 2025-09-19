@@ -6,7 +6,8 @@ import {
 } from './Tools'
 import {
     StateMachine, StateTransition, MachineState,
-    Program, Opcode, Immediate, StackPointerMove, TapeHeadMove,
+    Program, Bytecode,
+    Opcode, Immediate, StackPointerMove, TapeHeadMove,
 } from '../Machine'
 
 const STACK_SIZE = 16;
@@ -53,7 +54,7 @@ export class ProgramMachine implements StateMachine<MachineTransition, TapeTrans
 
         let instr = this.program.at(trans.ip);
         // let [ op, data, stack_diff, direction ] = instr;
-        return new TapeTransition( ...instr );
+        return new TapeTransition( instr );
     }
 
     toString () : string {
@@ -65,14 +66,16 @@ export class ProgramMachine implements StateMachine<MachineTransition, TapeTrans
 
 export class TapeTransition implements StateTransition {
     constructor(
-        public opcode    : Opcode,
-        public data      : Immediate | null,
-        public stackMove : StackPointerMove,
-        public tapeMove  : TapeHeadMove
+        public bytecode : Bytecode
     ) {}
 
+    get opcode    () : Opcode           { return this.bytecode[0] as Opcode           }
+    get data      () : Immediate        { return this.bytecode[1] as Immediate        }
+    get stackMove () : StackPointerMove { return this.bytecode[2] as StackPointerMove }
+    get tapeMove  () : TapeHeadMove     { return this.bytecode[3] as TapeHeadMove     }
+
     static getHaltTransition () : TapeTransition {
-        return new TapeTransition('HALT', null, 0, 0);
+        return new TapeTransition([ 'HALT', null, 0, 0 ] as Bytecode);
     }
 
     toString () : string {
