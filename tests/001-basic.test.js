@@ -13,8 +13,8 @@ let program = [
 ];
 
 let output = [];
-let halt   = false;
 
+let halt   = false;
 let pc     = 0;
 let ip     = 0;
 let sp     = 0;
@@ -26,12 +26,10 @@ while (!halt) {
     switch (op) {
     case 'HALT':
         halt = true;
-        tm = -(ip + 1);
-        break;
+        continue;
     case 'JUMP':
         ip += tm;
-        [ op, tm, sm ] = program[ip];
-        break;
+        continue;
     }
 
     switch (op) {
