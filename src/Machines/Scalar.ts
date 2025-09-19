@@ -99,10 +99,9 @@ export class TapeMachine implements StateMachine<TapeTransition, MachineTransiti
     }
 
     step (trans : TapeTransition) : MachineTransition {
-        let tos = this.sp;
+        let tos  = this.sp;
         this.sp += trans.stackMove;
-
-        this.ip = this.ip < 0 ? trans.tapeMove : trans.tapeMove + this.ip;
+        this.ip  = trans.tapeMove + Math.max(this.ip, 0);
         this.ic++;
 
         switch (trans.opcode) {
