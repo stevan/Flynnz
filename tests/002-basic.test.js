@@ -1,7 +1,11 @@
 
 const MAX_LOOPS = 256;
 
-const fmt = (n, w = 2, s = '0') => (n == null ? 'NULL' : n.toString()).padStart(w, s)
+const fmt = (n, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
+    (atEnd
+        ? (_st, _w, _s) => _st.padEnd(_w, _s)
+        : (_st, _w, _s) => _st.padStart(_w, _s)
+    )((n == null ? nullRepr : n.toString()), w, s)
 
 // -----------------------------------------------------------------------------
 // Useful constants
@@ -98,6 +102,25 @@ let popTest = [ // result should be 8
 // Machine
 // -----------------------------------------------------------------------------
 
+// load the programs and run them all ...
+[
+    [ 'popTest',     popTest     ],
+    [ 'powersOfTwo', powersOfTwo ],
+    [ 'countdown',   countdown   ],
+].forEach((exe) => {
+
+let [ name, program ] = exe;
+
+console.group(`Loading Program := ${name}`)
+console.log('+-------+--------+--------+--------+--------+');
+console.log('| STATE |     OP |   DATA | T(+/-) |  HEAP? |');
+console.log('+-------+--------+--------+--------+--------+');
+program.forEach((row, idx) => {
+    console.log('|' + row.map((v) => fmt(v, 6, ' ', false, '______')).join(' | ') + ' |')
+});
+console.log('+-------+--------+--------+--------+--------+');
+console.groupEnd();
+
 // initialize system state
 let state = SCAN;
 let pc    = 0;
@@ -107,8 +130,7 @@ let tos   = -1;
 // allocate the output log
 let output = [];
 
-// load the program
-let program = powersOfTwo; // popTest; //countdown;
+console.group(`Running Program := ${name}`)
 
 // execute until we hit the end, or an error
 while (state != HALT && state != ERR) {
@@ -242,21 +264,21 @@ while (state != HALT && state != ERR) {
     // -------------------------------------------------------------------------
     switch (st) {
     case HALT:
-        console.log(`${fmt(pc, 4)} HALT [______] [______] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
-        console.log('='.repeat(44));
+        console.log(`${fmt(pc, 5)} HALT [!!!!!!] [!!!!!!] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log('='.repeat(45));
         break;
     case ERR:
-        console.log('!'.repeat(44));
-        console.log(`${fmt(pc, 4)} ERR  [${fmt(op, 15, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
-        console.log('!'.repeat(44));
+        console.log('!'.repeat(45));
+        console.log(`${fmt(pc, 5)} ERR  [${fmt(op, 15, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log('!'.repeat(45));
         break;
     case JUMP:
-        console.log('-'.repeat(44));
-        console.log(`${fmt(pc, 4)} JUMP [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
-        console.log('-'.repeat(44));
+        console.log('-'.repeat(45));
+        console.log(`${fmt(pc, 5)} JUMP [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log('-'.repeat(45));
         break;
     case SCAN:
-        console.log(`${fmt(pc, 4)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log(`${fmt(pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
         break;
     }
 
@@ -279,11 +301,18 @@ while (state != HALT && state != ERR) {
     if (pc >= MAX_LOOPS) break;
 }
 
-console.log('+-------+--------+--------+--------+--------+--------+');
-console.log('|    PC |   HEAP |  STACK |     IP |     OP |  STATE |');
-console.log('+-------+--------+--------+--------+--------+--------+');
-output.filter((row) => row[1] == TRUE).forEach((row, idx) => {
-    console.log('|' + [ idx, ...row ].map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
-});
-console.log('+-------+--------+--------+--------+--------+--------+');
+console.groupEnd();
 
+
+console.group(`Program Results := ${name}`)
+console.log('+-------+--------+--------+--------+--------+');
+console.log('|  HEAP |  STACK |     IP |     OP |  STATE |');
+console.log('+-------+--------+--------+--------+--------+');
+output.filter((row) => row[1] == TRUE).forEach((row, idx) => {
+    console.log('|' + row.map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
+});
+console.log('+-------+--------+--------+--------+--------+');
+console.groupEnd();
+
+
+}); // end the programs loop - DO NOT REMOVE
