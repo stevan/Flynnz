@@ -105,8 +105,8 @@ let popTest = [ // result should be 8
 // load the programs and run them all ...
 [
     [ 'popTest',     popTest     ],
-    [ 'powersOfTwo', powersOfTwo ],
-    [ 'countdown',   countdown   ],
+    //[ 'powersOfTwo', powersOfTwo ],
+    //[ 'countdown',   countdown   ],
 ].forEach((exe) => {
 
 let [ name, program ] = exe;
@@ -136,7 +136,6 @@ console.group(`Running Program := ${name}`)
 while (state != HALT && state != ERR) {
     // loop local variables
     let temp;
-    let tosm = 1;
 
     // -------------------------------------------------------------------------
     // Decode the instruction
@@ -205,8 +204,6 @@ while (state != HALT && state != ERR) {
         // most situations, but I am not 100% sure.
         // ----------------------------------------------
         case POP:
-            // the TOS movement should DWIM
-            tosm = -1;
             break;
         // ----------------------------------------------
         // FIXME:
@@ -292,8 +289,8 @@ while (state != HALT && state != ERR) {
     // -------------------------------------------------------------------------
     state = st;
     pc   += 1;
+    tos  += 1;
     ip   += tm;
-    tos  += tosm;
     // -------------------------------------------------------------------------
 
     // go around the loop again, but
@@ -308,7 +305,9 @@ console.group(`Program Results := ${name}`)
 console.log('+-------+--------+--------+--------+--------+');
 console.log('|  HEAP |  STACK |     IP |     OP |  STATE |');
 console.log('+-------+--------+--------+--------+--------+');
-output.filter((row) => row[1] == TRUE).forEach((row, idx) => {
+output
+//.filter((row) => row[1] == TRUE)
+.forEach((row, idx) => {
     console.log('|' + row.map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
 });
 console.log('+-------+--------+--------+--------+--------+');
