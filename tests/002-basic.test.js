@@ -3,14 +3,23 @@ const MAX_LOOPS = 64;
 
 const fmt = (n, w = 2, s = '0') => (n == null ? 'NULL' : n.toString()).padStart(w, s)
 
+// -----------------------------------------------------------------------------
+// Useful constants
+// -----------------------------------------------------------------------------
+
 const ___ = null;
 
 const TRUE  = 1;
 const FALSE = 0;
 
+// -----------------------------------------------------------------------------
+// Instruction Set
+// -----------------------------------------------------------------------------
+
 const SCAN = 'SCAN';
-    const DUP = 'DUP';
-    const POP = 'POP';
+    const PUSH = 'PUSH';
+    const DUP  = 'DUP';
+    const POP  = 'POP';
 
     const NEG = 'NEG'
     const ADD = 'ADD';
@@ -35,33 +44,55 @@ const JUMP  = 'JUMP';
     const ANY = 'ANY';
 
 const HALT = 'HALT';
+const ERR  = 'ERR';
 
-// 1) state
-// 1) operation
-// 2) tape move
-// 3) sp move
-// 4) tos move
-// ?) store to heap?
+// -----------------------------------------------------------------------------
+// Instructions
+// -----------------------------------------------------------------------------
+// 1) machine state to transition to
+// 2) machine operation to perform
+// 3) direction and distance of next tape move
+// 4) top-of-stack tracker
+// -----------------------------------------------------------------------------
+// 1. Machine State Transiton
+//
+// -----------------------------------------------------------------------------
+// 2. Machine Operation
+//
+// -----------------------------------------------------------------------------
+// 3. Tape Direction & Distance
+//
+// -----------------------------------------------------------------------------
+// 4. Top Of Stack tracker
+//
+// -----------------------------------------------------------------------------
 
-let program1 = [
-    [ SCAN, 2,      1,  1  ],
-    [ SCAN, DUP,    1,  1  ],
-    [ SCAN, ADD,    1,  1  ],
-    [ JUMP, ___,   -2,  0  ],
-    [ HALT, ___,    0,  0  ],
+
+let powersOfTwo = [
+    [ SCAN, PUSH,   2,  1,  1  ],
+    [ SCAN, DUP,  ___,  1,  1  ],
+    [ SCAN, ADD,  ___,  1,  1  ],
+    [ JUMP, ANY,  ___, -2,  0  ],
+    [ HALT, ___,  ___,  0,  0  ],
 ];
 
-let program = [
-    [ SCAN,  10,    1,  1  ],
-    [ SCAN,  DUP,   1,  1  ],
-    [ SCAN,  1,     1,  1  ],
-    [ SCAN,  SUB,   1,  1  ],
-    [ SCAN,  DUP,   1,  1  ],
-    [ SCAN,  1,     1,  1  ],
-    [ SCAN,  EQ,    1,  1  ],
-    [ JUMP,  EQZ,  -6, -3  ],
-    [ HALT,  ___,   0,  0  ],
+let countdown = [
+    [ SCAN,  PUSH,  10,  1,  1, TRUE,   ],
+    [ SCAN,  DUP,  ___,  1,  1, FALSE,  ],
+    [ SCAN,  PUSH,   1,  1,  1, FALSE,  ],
+    [ SCAN,  SUB,  ___,  1,  1, FALSE,  ],
+    [ SCAN,  DUP,  ___,  1,  1, TRUE,   ],
+    [ SCAN,  PUSH,   1,  1,  1, FALSE,  ],
+    [ SCAN,  EQ,   ___,  1,  1, FALSE,  ],
+    [ JUMP,  EQZ,  ___, -6, -3, FALSE,  ],
+    [ HALT,  ___,  ___,  0,  0, FALSE,  ],
 ];
+
+// -----------------------------------------------------------------------------
+// Machine
+// -----------------------------------------------------------------------------
+
+let program = countdown;
 
 // system state
 let state = SCAN;
@@ -72,19 +103,19 @@ let tos   = -1;
 // the output we produce
 let output = [];
 
-while (state != HALT && pc < MAX_LOOPS) {
+while (state != HALT && state != ERR && pc < MAX_LOOPS) {
     // allocate a temp ...
     let temp;
 
     // -------------------------------------------------------------------------
     // Decode the instruction
     // -------------------------------------------------------------------------
-    let [ st, op, tm, tosm ] = program[ip];
+    let [ st, op, data, tm, tosm, retain ] = program[ip];
 
     //console.log('INSTRUCTION', program[ip]);
 
     // -------------------------------------------------------------------------
-    // Apply state changes (other than SCAN)
+    // Apply state changes
     // -------------------------------------------------------------------------
     switch (st) {
     case HALT:
@@ -96,14 +127,24 @@ while (state != HALT && pc < MAX_LOOPS) {
             // unconditional jump, just goto the IP based on TM
             break;
         case EQZ:
-            tm = output[tos][0] == 0 ? tm : 1;
             // conditional jump, just goto the IP if zero
+            tm = output[tos][0] == 0 ? tm : 1;
+            // no matter what, copy the TOS to the
+            // output, but do not actually alter
+            // the TOS state here, that happens
+            // below, and will cancel out any
+            // negative values since it should
+            // really always be one, and these
+            // negative numbers are only allowed
+            // for jumps as a means of carrying
+            // over the values to the next loop
             temp = output[tos + tosm][0];
-            //console.log(tos, tosm, output[tos + tosm]);
-            tosm = 1;
-            //console.log(output);
-            //throw new Error("FUCK");
             break;
+        default:
+            // if we don't know the op, then we should halt and complain!
+            st = ERR;
+            console.log(`ERROR: Unknown JUMP Operation(${op}) - HALTING!`);
+            continue;
         }
         break;
     case SCAN:
@@ -112,6 +153,9 @@ while (state != HALT && pc < MAX_LOOPS) {
         // -------------------------------------------------------------------------
         switch (op) {
         // stack ops ...
+        case PUSH:
+            temp = data;
+            break;
         case DUP:
             // simply duplicate the previous stack value
             temp = output[tos][0];
@@ -141,28 +185,35 @@ while (state != HALT && pc < MAX_LOOPS) {
         case AND: temp = output[tos - 1][0] && output[tos][0] ? TRUE : FALSE; break;
         case OR:  temp = output[tos - 1][0] || output[tos][0] ? TRUE : FALSE; break;
         default:
-            // if it is none of these, then it is likely to be a number
-            // so we can just "push" that into the stack by passing it
-            // through to the output
-            temp = op;
+            // if we don't know the op, then we should halt and complain!
+            st = ERR;
+            console.log(`ERROR: Unknown SCAN Operation(${op}) - HALTING!`);
+            continue;
         }
         break;
     default:
         // if we don't know the state, then we should halt and complain!
-        st = HALT;
-        console.log(`Unknown state(${st}) - HALTING!`);
+        st = ERR;
+        console.log(`ERROR: Unknown Machine state(${st}) - HALTING!`);
         continue;
     }
 
+    // -------------------------------------------------------------------------
+    // Send information to the console about what we are doing
+    // -------------------------------------------------------------------------
     switch (st) {
     case HALT:
-        console.log('-'.repeat(60));
-        console.log(`${fmt(pc, 4)} HALT [      ] [      ] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log('-'.repeat(44));
+        console.log(`${fmt(pc, 4)} HALT! @ IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        break;
+    case ERR:
+        console.log('!'.repeat(44));
+        console.log(`${fmt(pc, 4)} ERROR @ IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
         break;
     case JUMP:
-        console.log('-'.repeat(60));
+        console.log('-'.repeat(44));
         console.log(`${fmt(pc, 4)} JUMP [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
-        console.log('-'.repeat(60));
+        console.log('-'.repeat(44));
         break;
     case SCAN:
         console.log(`${fmt(pc, 4)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
@@ -170,9 +221,9 @@ while (state != HALT && pc < MAX_LOOPS) {
     }
 
     // -------------------------------------------------------------------------
-    // Write to the output, if the ic has changed
+    // Write to the output
     // -------------------------------------------------------------------------
-    output[pc] = [ temp, op, state, pc, ip, tos ];
+    output[pc] = [ temp, retain, ip, op, state ];
 
     // -------------------------------------------------------------------------
     // Update system loop state
@@ -180,10 +231,16 @@ while (state != HALT && pc < MAX_LOOPS) {
     state = st;
     pc    = pc  + 1;
     ip    = ip  + tm;
-    tos   = tos + tosm;
+    tos   = tos + Math.max(1, tosm);
 
     // go around the loop again ...
 }
 
-console.table([['STACK', 'OP', 'STATE', 'PC', 'IP', 'TOS'], ...output]);
+console.log('+-------+--------+--------+--------+--------+--------+');
+console.log('|    PC |   HEAP |  STACK |     IP |     OP |  STATE |');
+console.log('+-------+--------+--------+--------+--------+--------+');
+output.filter((row) => row[1] == TRUE).forEach((row, idx) => {
+    console.log('|' + [ idx, ...row ].map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
+});
+console.log('+-------+--------+--------+--------+--------+--------+');
 
