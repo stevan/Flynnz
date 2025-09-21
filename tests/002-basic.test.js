@@ -1,5 +1,5 @@
 
-const MAX_LOOPS = 64;
+const MAX_LOOPS = 256;
 
 const fmt = (n, w = 2, s = '0') => (n == null ? 'NULL' : n.toString()).padStart(w, s)
 
@@ -45,6 +45,9 @@ const JUMP  = 'JUMP';
 
 const HALT = 'HALT';
 const ERR  = 'ERR';
+    const INVALID_STATE     = 'INVALID M STATE';
+    const INVALID_SCAN_OP   = 'INVALID SCAN OP';
+    const INVALID_JUMP_OP   = 'INVALID JUMP OP';
 
 // -----------------------------------------------------------------------------
 // Instructions
@@ -145,8 +148,8 @@ while (state != HALT && state != ERR) {
         default:
             // if we don't know the op, then we should halt and complain!
             st = ERR;
-            console.log(`ERROR: Unknown JUMP Operation(${op}) - HALTING!`);
-            continue;
+            op = INVALID_JUMP_OP;
+            break;
         }
         break;
     case SCAN:
@@ -189,15 +192,15 @@ while (state != HALT && state != ERR) {
         default:
             // if we don't know the op, then we should halt and complain!
             st = ERR;
-            console.log(`ERROR: Unknown SCAN Operation(${op}) - HALTING!`);
-            continue;
+            op = INVALID_SCAN_OP;
+            break;
         }
         break;
     default:
         // if we don't know the state, then we should halt and complain!
         st = ERR;
-        console.log(`ERROR: Unknown Machine state(${st}) - HALTING!`);
-        continue;
+        op = INVALID_STATE;
+        break;
     }
 
     // -------------------------------------------------------------------------
@@ -205,12 +208,13 @@ while (state != HALT && state != ERR) {
     // -------------------------------------------------------------------------
     switch (st) {
     case HALT:
-        console.log('-'.repeat(44));
-        console.log(`${fmt(pc, 4)} HALT! @ IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log(`${fmt(pc, 4)} HALT [______] [______] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log('='.repeat(44));
         break;
     case ERR:
         console.log('!'.repeat(44));
-        console.log(`${fmt(pc, 4)} ERROR @ IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log(`${fmt(pc, 4)} ERR  [${fmt(op, 15, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log('!'.repeat(44));
         break;
     case JUMP:
         console.log('-'.repeat(44));
@@ -235,13 +239,9 @@ while (state != HALT && state != ERR) {
     ip    = ip  + tm;
     tos   = tos + Math.max(1, tosm);
 
-    if (pc >= MAX_LOOPS) {
-        st = 'ERR';
-        console.log(`ERROR: Max Loops (${MAX_LOOPS}) reached (${pc}) - HALTING!`);
-        continue;
-    }
-
-    // go around the loop again ...
+    // go around the loop again, but
+    // check the max loops for sanity
+    if (pc >= MAX_LOOPS) break;
 }
 
 console.log('+-------+--------+--------+--------+--------+--------+');
