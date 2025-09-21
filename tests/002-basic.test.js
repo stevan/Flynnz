@@ -20,6 +20,8 @@ const SCAN = 'SCAN';
     const PUSH = 'PUSH';
     const DUP  = 'DUP';
     const POP  = 'POP';
+    const SWAP = 'SWAP';
+    const ROT  = 'ROT';
 
     const NEG = 'NEG'
     const ADD = 'ADD';
@@ -147,7 +149,13 @@ while (state != HALT && state != ERR) {
         // Perform the operation
         // -------------------------------------------------------------------------
         switch (op) {
+        // ----------------------------------------------
         // stack ops ...
+        // ----------------------------------------------
+        // These are done and should be fine
+        // ----------------------------------------------
+        // PUSH (      -- n     )
+        // DUP  (    n -- n n   )
         case PUSH:
             temp = data;
             break;
@@ -155,30 +163,48 @@ while (state != HALT && state != ERR) {
             // simply duplicate the previous stack value
             temp = output[tos][0];
             break;
+        // ----------------------------------------------
+        // FIXME:
+        // ----------------------------------------------
+        // These are tricky because they require changing
+        // the previous stack state, which we do not want
+        // to do within the log, ... not sure how to do
+        // it yet, so we leave this here.
+        // ----------------------------------------------
+        // POP  (     n --       )
+        // SWAP (   a b -- b a   )
+        // ROT  ( a b c -- c b a )
+        // ----------------------------------------------
         case POP:
-            // duplicate the value which would have been TOS if pop-ed for real
-            // NOTE: this should work, haven't tested it yet ;)
-            temp = output[tos - 1][0];
+        case SWAP:
+        case ROT:
+            throw new Error(`TODO - ${op}`);
             break;
-        // TODO: SWAP? ROT? can they be done?
-        // math ...
+        // ----------------------------------------------
+        // maths ...
+        // ----------------------------------------------
         case NEG: temp = -(output[tos][0]); break;
         case ADD: temp = output[tos - 1][0] + output[tos][0]; break;
         case SUB: temp = output[tos - 1][0] - output[tos][0]; break;
         case MUL: temp = output[tos - 1][0] * output[tos][0]; break;
         case DIV: temp = output[tos - 1][0] / output[tos][0]; break;
         case MOD: temp = output[tos - 1][0] % output[tos][0]; break;
+        // ----------------------------------------------
         // comparison ...
+        // ----------------------------------------------
         case EQ: temp = output[tos - 1][0] == output[tos][0] ? TRUE : FALSE; break;
         case NE: temp = output[tos - 1][0] != output[tos][0] ? TRUE : FALSE; break;
         case LT: temp = output[tos - 1][0] <  output[tos][0] ? TRUE : FALSE; break;
         case LE: temp = output[tos - 1][0] <= output[tos][0] ? TRUE : FALSE; break;
         case GT: temp = output[tos - 1][0] >  output[tos][0] ? TRUE : FALSE; break;
         case GE: temp = output[tos - 1][0] >= output[tos][0] ? TRUE : FALSE; break;
+        // ----------------------------------------------
         // logical ...
+        // ----------------------------------------------
         case NOT: temp = output[tos][0] ? TRUE : FALSE; break;
         case AND: temp = output[tos - 1][0] && output[tos][0] ? TRUE : FALSE; break;
         case OR:  temp = output[tos - 1][0] || output[tos][0] ? TRUE : FALSE; break;
+        // ----------------------------------------------
         default:
             // if we don't know the op, then we should halt and complain!
             st = ERR;
@@ -225,9 +251,10 @@ while (state != HALT && state != ERR) {
     // Update system loop state
     // -------------------------------------------------------------------------
     state = st;
-    pc    = pc  + 1;
-    ip    = ip  + tm;
-    tos   = tos + Math.max(1, tosm);
+    pc   += 1;
+    ip   += tm;
+    tos  += Math.max(1, tosm);
+    // -------------------------------------------------------------------------
 
     // go around the loop again, but
     // check the max loops for sanity
