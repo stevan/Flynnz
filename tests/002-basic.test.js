@@ -59,11 +59,10 @@ const HALT = 'HALT';
 // 2) machine operation to perform
 // 3) immediate data needed for the op
 // 4) direction and distance of next tape move
-// 5) top-of-stack tracker
 // 6) keep value for the heap?
 // -----------------------------------------------------------------------------
 
-let powersOfTwo = [
+let powersOfTwo = [ // result should be 2 -> 256 by powers of 2
     [ SCAN, PUSH,   2,  1, TRUE  ],
     [ SCAN, DUP,  ___,  1, FALSE ],
     [ SCAN, ADD,  ___,  1, FALSE ],
@@ -74,7 +73,7 @@ let powersOfTwo = [
     [ HALT, ___,  ___,  0, FALSE ],
 ];
 
-let countdown = [
+let countdown = [ // result should be 10 -> 1 range
     [ SCAN,  PUSH,  10,  1, TRUE,   ],
     [ SCAN,  DUP,  ___,  1, FALSE,  ],
     [ SCAN,  PUSH,   1,  1, FALSE,  ],
