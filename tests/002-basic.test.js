@@ -144,6 +144,9 @@ while (state != HALT && state != ERR) {
 
     //console.log('INSTRUCTION', program[ip]);
 
+    let rhs = tos;
+    let lhs = tos - 1;
+
     // -------------------------------------------------------------------------
     // Apply state changes
     // -------------------------------------------------------------------------
@@ -158,7 +161,7 @@ while (state != HALT && state != ERR) {
             break;
         case EQZ:
             // conditional jump, just goto the IP if zero
-            tm = output[tos][0] == 0 ? tm : 1;
+            tm = output[rhs][0] == 0 ? tm : 1;
             // no matter what, copy the TOS to the
             // output, but do not actually alter
             // the TOS state here, that happens
@@ -168,7 +171,7 @@ while (state != HALT && state != ERR) {
             // negative numbers are only allowed
             // for jumps as a means of carrying
             // over the values to the next loop
-            temp = output[tos - 3][0];
+            temp = output[rhs - 3][0];
             break;
         default:
             // if we don't know the op, then we should halt and complain!
@@ -195,7 +198,7 @@ while (state != HALT && state != ERR) {
             break;
         case DUP:
             // simply duplicate the previous stack value
-            temp = output[tos][0];
+            temp = output[rhs][0];
             break;
         // ----------------------------------------------
         // Pop is a little funny because it basically
@@ -220,27 +223,27 @@ while (state != HALT && state != ERR) {
         // ----------------------------------------------
         // maths ...
         // ----------------------------------------------
-        case NEG: temp = -(output[tos][0]); break;
-        case ADD: temp = output[tos - 1][0] + output[tos][0]; break;
-        case SUB: temp = output[tos - 1][0] - output[tos][0]; break;
-        case MUL: temp = output[tos - 1][0] * output[tos][0]; break;
-        case DIV: temp = output[tos - 1][0] / output[tos][0]; break;
-        case MOD: temp = output[tos - 1][0] % output[tos][0]; break;
+        case NEG: temp = -(output[rhs][0]); break;
+        case ADD: temp = output[lhs][0] + output[rhs][0]; break;
+        case SUB: temp = output[lhs][0] - output[rhs][0]; break;
+        case MUL: temp = output[lhs][0] * output[rhs][0]; break;
+        case DIV: temp = output[lhs][0] / output[rhs][0]; break;
+        case MOD: temp = output[lhs][0] % output[rhs][0]; break;
         // ----------------------------------------------
         // comparison ...
         // ----------------------------------------------
-        case EQ: temp = output[tos - 1][0] == output[tos][0] ? TRUE : FALSE; break;
-        case NE: temp = output[tos - 1][0] != output[tos][0] ? TRUE : FALSE; break;
-        case LT: temp = output[tos - 1][0] <  output[tos][0] ? TRUE : FALSE; break;
-        case LE: temp = output[tos - 1][0] <= output[tos][0] ? TRUE : FALSE; break;
-        case GT: temp = output[tos - 1][0] >  output[tos][0] ? TRUE : FALSE; break;
-        case GE: temp = output[tos - 1][0] >= output[tos][0] ? TRUE : FALSE; break;
+        case EQ: temp = output[lhs][0] == output[rhs][0] ? TRUE : FALSE; break;
+        case NE: temp = output[lhs][0] != output[rhs][0] ? TRUE : FALSE; break;
+        case LT: temp = output[lhs][0] <  output[rhs][0] ? TRUE : FALSE; break;
+        case LE: temp = output[lhs][0] <= output[rhs][0] ? TRUE : FALSE; break;
+        case GT: temp = output[lhs][0] >  output[rhs][0] ? TRUE : FALSE; break;
+        case GE: temp = output[lhs][0] >= output[rhs][0] ? TRUE : FALSE; break;
         // ----------------------------------------------
         // logical ...
         // ----------------------------------------------
-        case NOT: temp = output[tos][0] ? TRUE : FALSE; break;
-        case AND: temp = output[tos - 1][0] && output[tos][0] ? TRUE : FALSE; break;
-        case OR:  temp = output[tos - 1][0] || output[tos][0] ? TRUE : FALSE; break;
+        case NOT: temp = output[rhs][0] ? TRUE : FALSE; break;
+        case AND: temp = output[lhs][0] && output[rhs][0] ? TRUE : FALSE; break;
+        case OR:  temp = output[lhs][0] || output[rhs][0] ? TRUE : FALSE; break;
         // ----------------------------------------------
         default:
             // if we don't know the op, then we should halt and complain!
@@ -282,7 +285,7 @@ while (state != HALT && state != ERR) {
     // -------------------------------------------------------------------------
     // Write to the output
     // -------------------------------------------------------------------------
-    output[pc] = [ temp, retain, ip, op, st ];
+    output[pc] = [ temp, retain, ip, op, st, rhs, lhs ];
 
     // -------------------------------------------------------------------------
     // Update system loop state
