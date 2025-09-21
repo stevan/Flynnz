@@ -43,40 +43,30 @@ const JUMP  = 'JUMP';
     const EQZ = 'EQZ';
     const ANY = 'ANY';
 
-const HALT = 'HALT';
 const ERR  = 'ERR';
     const INVALID_STATE     = 'INVALID M STATE';
     const INVALID_SCAN_OP   = 'INVALID SCAN OP';
     const INVALID_JUMP_OP   = 'INVALID JUMP OP';
+
+const HALT = 'HALT';
 
 // -----------------------------------------------------------------------------
 // Instructions
 // -----------------------------------------------------------------------------
 // 1) machine state to transition to
 // 2) machine operation to perform
-// 3) direction and distance of next tape move
-// 4) top-of-stack tracker
+// 3) immediate data needed for the op
+// 4) direction and distance of next tape move
+// 5) top-of-stack tracker
+// 6) keep value for the heap?
 // -----------------------------------------------------------------------------
-// 1. Machine State Transiton
-//
-// -----------------------------------------------------------------------------
-// 2. Machine Operation
-//
-// -----------------------------------------------------------------------------
-// 3. Tape Direction & Distance
-//
-// -----------------------------------------------------------------------------
-// 4. Top Of Stack tracker
-//
-// -----------------------------------------------------------------------------
-
 
 let powersOfTwo = [
-    [ SCAN, PUSH,   2,  1,  1  ],
-    [ SCAN, DUP,  ___,  1,  1  ],
-    [ SCAN, ADD,  ___,  1,  1  ],
-    [ JUMP, ANY,  ___, -2,  0  ],
-    [ HALT, ___,  ___,  0,  0  ],
+    [ SCAN, PUSH,   2,  1,  1, FALSE ],
+    [ SCAN, DUP,  ___,  1,  1, FALSE ],
+    [ SCAN, ADD,  ___,  1,  1, FALSE ],
+    [ JUMP, ANY,  ___, -2,  0, FALSE ],
+    [ HALT, ___,  ___,  0,  0, FALSE ],
 ];
 
 let countdown = [
