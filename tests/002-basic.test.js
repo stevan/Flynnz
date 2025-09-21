@@ -83,6 +83,15 @@ let countdown = [
     [ HALT,  ___,  ___,  0,  0, FALSE,  ],
 ];
 
+let test = [
+    [ SCAN, PUSH,   2,  1,  1, TRUE ],
+    [ SCAN, DUP,  ___,  1,  1, TRUE ],
+    [ SCAN, PUSH,   5,  1,  1, TRUE ],
+    [ SCAN, POP,  ___,  1,  1, TRUE ],
+    [ SCAN, ADD,  ___,  1,  1, TRUE ],
+    [ HALT, ___,  ___,  0,  0, TRUE ],
+];
+
 // -----------------------------------------------------------------------------
 // Machine
 // -----------------------------------------------------------------------------
@@ -97,7 +106,7 @@ let tos   = -1;
 let output = [];
 
 // load the program
-let program = countdown;
+let program = test;
 
 // execute until we hit the end, or an error
 while (state != HALT && state != ERR) {
