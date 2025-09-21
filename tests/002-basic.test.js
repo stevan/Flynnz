@@ -92,18 +92,20 @@ let countdown = [
 // Machine
 // -----------------------------------------------------------------------------
 
-let program = countdown;
-
-// system state
+// initialize system state
 let state = SCAN;
 let pc    = 0;
 let ip    = 0;
 let tos   = -1;
 
-// the output we produce
+// allocate the output log
 let output = [];
 
-while (state != HALT && state != ERR && pc < MAX_LOOPS) {
+// load the program
+let program = countdown;
+
+// execute until we hit the end, or an error
+while (state != HALT && state != ERR) {
     // allocate a temp ...
     let temp;
 
@@ -223,7 +225,7 @@ while (state != HALT && state != ERR && pc < MAX_LOOPS) {
     // -------------------------------------------------------------------------
     // Write to the output
     // -------------------------------------------------------------------------
-    output[pc] = [ temp, retain, ip, op, state ];
+    output[pc] = [ temp, retain, ip, op, st ];
 
     // -------------------------------------------------------------------------
     // Update system loop state
@@ -232,6 +234,12 @@ while (state != HALT && state != ERR && pc < MAX_LOOPS) {
     pc    = pc  + 1;
     ip    = ip  + tm;
     tos   = tos + Math.max(1, tosm);
+
+    if (pc >= MAX_LOOPS) {
+        st = 'ERR';
+        console.log(`ERROR: Max Loops (${MAX_LOOPS}) reached (${pc}) - HALTING!`);
+        continue;
+    }
 
     // go around the loop again ...
 }
