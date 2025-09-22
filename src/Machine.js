@@ -22,32 +22,25 @@ function initShadowStack () {
     // my brain
     let stack = [];
     return {
-        toArray  : function () { return stack },
+        toArray  : function () { return stack.map((e) => e[1]) },
         height   : function () { return stack.length },
-        rhs      : function () { return stack.at(0) },
-        lhs      : function () { return stack.at(1) },
-        pop      : function ()  { stack.shift() },
-        push     : function (n) { return stack.unshift(n) },
-        unop     : function (n) { this.pop(); this.push(n) },
-        binop    : function (n) { this.pop(); this.pop(); this.push(n) },
-    };
-}
 
-function initOutputLog () {
-    return [];
+        rhs      : function () { return stack.at(0)?.at(1) },
+        lhs      : function () { return stack.at(1)?.at(1) },
+
+        pop      : function ()     { stack.shift() },
+        push     : function (n, v) { stack.unshift([n, v]) },
+
+        unop     : function (n, v) { this.pop(); this.push(n, v) },
+        binop    : function (n, v) { this.pop(); this.pop(); this.push(n, v) },
+    };
 }
 
 // -----------------------------------------------------------------------------
 
 export function *run (name, program, DEBUG) {
-    // initialize system state
-    let state = SCAN;
-    let pc    = 0;
-    let ip    = 0;
 
-    // allocate the output log
-    let output = initOutputLog();
-    let shadow = initShadowStack();
+    let [ state, pc, ip, shadow ] = [ SCAN, 0, 0, initShadowStack() ]
 
     // execute until we hit the end, or an error
     while (state != HALT && state != ERR) {
@@ -60,8 +53,6 @@ export function *run (name, program, DEBUG) {
 
         // loop local variables
         let temp;
-        let rhs = shadow.rhs();
-        let lhs = shadow.lhs();
 
         // -------------------------------------------------------------------------
         // Apply state changes
@@ -77,7 +68,7 @@ export function *run (name, program, DEBUG) {
                 break;
             case EQZ:
                 // conditional jump, just goto the IP if zero
-                tm = output[rhs][0] == 0 ? tm : 1;
+                tm = shadow.rhs() == 0 ? tm : 1;
                 shadow.pop();
                 break;
             default:
@@ -102,12 +93,12 @@ export function *run (name, program, DEBUG) {
             // POP  (    n --       )
             case PUSH:
                 temp = data;
-                shadow.push(pc);
+                shadow.push(pc, temp);
                 break;
             case DUP:
                 // simply duplicate the previous stack value
-                temp = output[rhs][0];
-                shadow.push(pc);
+                temp = shadow.rhs();
+                shadow.push(pc, temp);
                 break;
             case POP:
                 shadow.pop();
@@ -122,27 +113,27 @@ export function *run (name, program, DEBUG) {
             // ----------------------------------------------
             // maths ...
             // ----------------------------------------------
-            case NEG: temp = -(output[rhs][0]); shadow.unop(pc); break;
-            case ADD: temp = output[lhs][0] + output[rhs][0]; shadow.binop(pc); break;
-            case SUB: temp = output[lhs][0] - output[rhs][0]; shadow.binop(pc); break;
-            case MUL: temp = output[lhs][0] * output[rhs][0]; shadow.binop(pc); break;
-            case DIV: temp = output[lhs][0] / output[rhs][0]; shadow.binop(pc); break;
-            case MOD: temp = output[lhs][0] % output[rhs][0]; shadow.binop(pc); break;
+            case NEG: temp = -(shadow.rhs()); shadow.unop(pc, temp); break;
+            case ADD: temp = shadow.lhs() + shadow.rhs(); shadow.binop(pc, temp); break;
+            case SUB: temp = shadow.lhs() - shadow.rhs(); shadow.binop(pc, temp); break;
+            case MUL: temp = shadow.lhs() * shadow.rhs(); shadow.binop(pc, temp); break;
+            case DIV: temp = shadow.lhs() / shadow.rhs(); shadow.binop(pc, temp); break;
+            case MOD: temp = shadow.lhs() % shadow.rhs(); shadow.binop(pc, temp); break;
             // ----------------------------------------------
             // comparison ...
             // ----------------------------------------------
-            case EQ: temp = output[lhs][0] == output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
-            case NE: temp = output[lhs][0] != output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
-            case LT: temp = output[lhs][0] <  output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
-            case LE: temp = output[lhs][0] <= output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
-            case GT: temp = output[lhs][0] >  output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
-            case GE: temp = output[lhs][0] >= output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
+            case EQ: temp = shadow.lhs() == shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case NE: temp = shadow.lhs() != shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case LT: temp = shadow.lhs() <  shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case LE: temp = shadow.lhs() <= shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case GT: temp = shadow.lhs() >  shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case GE: temp = shadow.lhs() >= shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
             // ----------------------------------------------
             // logical ...
             // ----------------------------------------------
-            case NOT: temp = output[rhs][0] ? TRUE : FALSE; shadow.unop(pc); break;
-            case AND: temp = output[lhs][0] && output[rhs][0] ? TRUE : FALSE; break;
-            case OR:  temp = output[lhs][0] || output[rhs][0] ? TRUE : FALSE; break;
+            case NOT: temp = shadow.rhs() ? TRUE : FALSE; shadow.unop(pc, temp); break;
+            case AND: temp = shadow.lhs() && shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case OR:  temp = shadow.lhs() || shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
             // ----------------------------------------------
             default:
                 // if we don't know the op, then we should halt and complain!
@@ -161,8 +152,7 @@ export function *run (name, program, DEBUG) {
         // -------------------------------------------------------------------------
         // Write to the output
         // -------------------------------------------------------------------------
-        output[pc] = [ temp, st, pc, ip, instruction, shadow ];
-        yield output[pc];
+        yield [ temp, st, pc, ip, instruction, shadow ];
 
         // -------------------------------------------------------------------------
         // Update system loop state
