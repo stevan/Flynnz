@@ -13,6 +13,13 @@ import {
 // -----------------------------------------------------------------------------
 
 function initShadowStack () {
+    // keep a shadow stack of indicies
+    // of things in the output log so
+    // that we can always easily get
+    // the current stack values without
+    // needing to do fancy indexing
+    // stuff that always ends up hurting
+    // my brain
     let stack = [];
     return {
         toArray  : function () { return stack.map((e) => e[1]) },
@@ -31,52 +38,21 @@ function initShadowStack () {
 
 // -----------------------------------------------------------------------------
 
-function initMachineState () {
-    return [ SCAN, 0, 0, initShadowStack() ];
-}
+export function *run (name, program, DEBUG) {
 
-function getMachineState       (ms) { return ms[0] }
-function getProgramCounter     (ms) { return ms[1] }
-function getInstructionPointer (ms) { return ms[2] }
-function getShadowStack        (ms) { return ms[3] }
+    let [ state, pc, ip, shadow ] = [ SCAN, 0, 0, initShadowStack() ]
 
-function machineIsRunning (ms) {
-    return ms[0] != HALT && ms[0] != ERR
-}
+    // execute until we hit the end, or an error
+    while (state != HALT && state != ERR) {
 
-function getProgramInstruction (ms, program) {
-    return program[ ms[2] ]
-}
+        // -------------------------------------------------------------------------
+        // Decode the instruction
+        // -------------------------------------------------------------------------
+        let instruction = program[ip];
+        let [ st, op, data, tm, retain ] = instruction;
 
-function updateMachineState (ms, st, tm) {
-    ms[0]  = st;
-    ms[1] += 1;
-    ms[2] += tm;
-}
-
-function yieldMachineOutput (temp, st, ms, program) {
-    return [
-        temp,
-        st,
-        getProgramCounter(ms),
-        getInstructionPointer(ms),
-        getProgramInstruction(ms, program),
-        getShadowStack(ms),
-    ]
-}
-
-// -----------------------------------------------------------------------------
-
-export function *run (name, program) {
-
-    let ms     = initMachineState();
-    let shadow = getShadowStack(ms);
-
-    while (machineIsRunning(ms)) {
-        let pc = getProgramCounter(ms);
-
+        // loop local variables
         let temp;
-        let [ st, op, data, tm, retain ] = getProgramInstruction( ms, program );
 
         // -------------------------------------------------------------------------
         // Apply state changes
@@ -98,7 +74,7 @@ export function *run (name, program) {
             default:
                 // if we don't know the op, then we should halt and complain!
                 st = ERR;
-                //op = INVALID_JUMP_OP;
+                op = INVALID_JUMP_OP;
                 break;
             }
             break;
@@ -162,20 +138,33 @@ export function *run (name, program) {
             default:
                 // if we don't know the op, then we should halt and complain!
                 st = ERR;
-                //op = INVALID_SCAN_OP;
+                op = INVALID_SCAN_OP;
                 break;
             }
             break;
         default:
             // if we don't know the state, then we should halt and complain!
             st = ERR;
-            //op = INVALID_STATE;
+            op = INVALID_STATE;
             break;
         }
 
-        yield yieldMachineOutput(temp, st, ms, program);
+        // -------------------------------------------------------------------------
+        // Write to the output
+        // -------------------------------------------------------------------------
+        yield [ temp, st, pc, ip, instruction, shadow ];
 
-        updateMachineState(ms, st, tm);
+        // -------------------------------------------------------------------------
+        // Update system loop state
+        // -------------------------------------------------------------------------
+        state = st;
+        pc   += 1;
+        ip   += tm;
+        // -------------------------------------------------------------------------
+
+        // go around the loop again, but
+        // check the max loops for sanity
+        if (pc >= MAX_LOOPS) break;
     }
 }
 
