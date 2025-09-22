@@ -1,9 +1,5 @@
 
-import { MAX_LOOPS, ___, TRUE, FALSE, } from '../src/Constants.js'
-
-import {
-    SCAN, JUMP, HALT, ERR,
-} from '../src/ISA.js'
+import { SCAN, JUMP, HALT, ERR, ___, TRUE, FALSE, } from '../src/ISA.js'
 
 export const DIVIDER   = '-'.repeat(120);
 
@@ -39,7 +35,7 @@ export function displayRuntimeFooter() {
     console.groupEnd();
 }
 
-export function displayMachineState (pc, ip, st, op, tos, temp, sstack) {
+export function displayMachineState (pc, ip, st, op, tos, temp, shadow) {
     switch (st) {
     case HALT:
         console.log(`${fmt(pc, 5)} HALT [!!!!!!] [!!!!!!] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
@@ -56,7 +52,7 @@ export function displayMachineState (pc, ip, st, op, tos, temp, sstack) {
         console.log('-'.repeat(45));
         break;
     case SCAN:
-        console.log(`${fmt(pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)}) [${sstack.join(', ')}]`);
+        console.log(`${fmt(pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)}) [${shadow.toArray().join(', ')}]`);
         break;
     }
 }
