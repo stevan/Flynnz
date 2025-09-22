@@ -134,6 +134,12 @@ let tos   = 0;
 let output = [];
 
 // keep a shadow stack of indicies
+// of things in the output log so
+// that we can always easily get
+// the current stack values without
+// needing to do fancy indexing
+// stuff that always ends up hurting
+// my brain
 let sstack = [];
 let shadow = {
     height   : function () { return sstack.length },
@@ -307,22 +313,21 @@ while (state != HALT && state != ERR) {
     // -------------------------------------------------------------------------
     // Write to the output
     // -------------------------------------------------------------------------
-    output[pc] = [ temp, tos, rhs, lhs, st, op, ip, retain ];
+    output[tos] = [ temp, tos, rhs, lhs, st, op, ip, retain ];
 
     // -------------------------------------------------------------------------
     // Update system loop state
     // -------------------------------------------------------------------------
     state = st;
+    ip   += tm;
     pc   += 1;
     tos  += 1;
-    ip   += tm;
     // -------------------------------------------------------------------------
 
     // go around the loop again, but
     // check the max loops for sanity
     if (pc >= MAX_LOOPS) break;
 }
-
 console.groupEnd();
 
 console.log(DIVIDER);
