@@ -10,7 +10,9 @@ import {
     TRUE, FALSE,
 } from './ISA.js'
 
-export function initShadowStack () {
+// -----------------------------------------------------------------------------
+
+function initShadowStack () {
     // keep a shadow stack of indicies
     // of things in the output log so
     // that we can always easily get
@@ -31,39 +33,35 @@ export function initShadowStack () {
     };
 }
 
-export function initOutputLog () {
+function initOutputLog () {
     return [];
 }
 
-export function runProgram (name, program, DEBUG) {
+// -----------------------------------------------------------------------------
+
+export function *run (name, program, DEBUG) {
     // initialize system state
     let state = SCAN;
     let pc    = 0;
     let ip    = 0;
-    let tos   = 0;
 
     // allocate the output log
     let output = initOutputLog();
     let shadow = initShadowStack();
 
-    if (DEBUG) DEBUG.displayRuntimeHeader(name);
-
     // execute until we hit the end, or an error
     while (state != HALT && state != ERR) {
-        // loop local variables
-        let temp;
 
         // -------------------------------------------------------------------------
         // Decode the instruction
         // -------------------------------------------------------------------------
-        let [ st, op, data, tm, retain ] = program[ip];
+        let instruction = program[ip];
+        let [ st, op, data, tm, retain ] = instruction;
 
-        //console.log('INSTRUCTION', program[ip]);
-
+        // loop local variables
+        let temp;
         let rhs = shadow.rhs();
         let lhs = shadow.lhs();
-
-        //console.log('rhs', rhs, 'lhs', lhs, 'shadow', sstack.join(', '));
 
         // -------------------------------------------------------------------------
         // Apply state changes
@@ -80,15 +78,6 @@ export function runProgram (name, program, DEBUG) {
             case EQZ:
                 // conditional jump, just goto the IP if zero
                 tm = output[rhs][0] == 0 ? tm : 1;
-                // no matter what, copy the TOS to the
-                // output, but do not actually alter
-                // the TOS state here, that happens
-                // below, and will cancel out any
-                // negative values since it should
-                // really always be one, and these
-                // negative numbers are only allowed
-                // for jumps as a means of carrying
-                // over the values to the next loop
                 shadow.pop();
                 break;
             default:
@@ -113,12 +102,12 @@ export function runProgram (name, program, DEBUG) {
             // POP  (    n --       )
             case PUSH:
                 temp = data;
-                shadow.push(tos);
+                shadow.push(pc);
                 break;
             case DUP:
                 // simply duplicate the previous stack value
                 temp = output[rhs][0];
-                shadow.push(tos);
+                shadow.push(pc);
                 break;
             case POP:
                 shadow.pop();
@@ -133,25 +122,25 @@ export function runProgram (name, program, DEBUG) {
             // ----------------------------------------------
             // maths ...
             // ----------------------------------------------
-            case NEG: temp = -(output[rhs][0]); shadow.unop(tos); break;
-            case ADD: temp = output[lhs][0] + output[rhs][0]; shadow.binop(tos); break;
-            case SUB: temp = output[lhs][0] - output[rhs][0]; shadow.binop(tos); break;
-            case MUL: temp = output[lhs][0] * output[rhs][0]; shadow.binop(tos); break;
-            case DIV: temp = output[lhs][0] / output[rhs][0]; shadow.binop(tos); break;
-            case MOD: temp = output[lhs][0] % output[rhs][0]; shadow.binop(tos); break;
+            case NEG: temp = -(output[rhs][0]); shadow.unop(pc); break;
+            case ADD: temp = output[lhs][0] + output[rhs][0]; shadow.binop(pc); break;
+            case SUB: temp = output[lhs][0] - output[rhs][0]; shadow.binop(pc); break;
+            case MUL: temp = output[lhs][0] * output[rhs][0]; shadow.binop(pc); break;
+            case DIV: temp = output[lhs][0] / output[rhs][0]; shadow.binop(pc); break;
+            case MOD: temp = output[lhs][0] % output[rhs][0]; shadow.binop(pc); break;
             // ----------------------------------------------
             // comparison ...
             // ----------------------------------------------
-            case EQ: temp = output[lhs][0] == output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
-            case NE: temp = output[lhs][0] != output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
-            case LT: temp = output[lhs][0] <  output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
-            case LE: temp = output[lhs][0] <= output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
-            case GT: temp = output[lhs][0] >  output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
-            case GE: temp = output[lhs][0] >= output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
+            case EQ: temp = output[lhs][0] == output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
+            case NE: temp = output[lhs][0] != output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
+            case LT: temp = output[lhs][0] <  output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
+            case LE: temp = output[lhs][0] <= output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
+            case GT: temp = output[lhs][0] >  output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
+            case GE: temp = output[lhs][0] >= output[rhs][0] ? TRUE : FALSE; shadow.binop(pc); break;
             // ----------------------------------------------
             // logical ...
             // ----------------------------------------------
-            case NOT: temp = output[rhs][0] ? TRUE : FALSE; shadow.unop(tos); break;
+            case NOT: temp = output[rhs][0] ? TRUE : FALSE; shadow.unop(pc); break;
             case AND: temp = output[lhs][0] && output[rhs][0] ? TRUE : FALSE; break;
             case OR:  temp = output[lhs][0] || output[rhs][0] ? TRUE : FALSE; break;
             // ----------------------------------------------
@@ -170,31 +159,22 @@ export function runProgram (name, program, DEBUG) {
         }
 
         // -------------------------------------------------------------------------
-        // Send information to the console about what we are doing
-        // -------------------------------------------------------------------------
-        if (DEBUG) DEBUG.displayMachineState(pc, ip, st, op, tos, temp, shadow);
-
-        // -------------------------------------------------------------------------
         // Write to the output
         // -------------------------------------------------------------------------
-        output[tos] = [ temp, tos, rhs, lhs, st, op, ip, retain ];
+        output[pc] = [ temp, st, pc, ip, instruction, shadow ];
+        yield output[pc];
 
         // -------------------------------------------------------------------------
         // Update system loop state
         // -------------------------------------------------------------------------
         state = st;
-        ip   += tm;
         pc   += 1;
-        tos  += 1;
+        ip   += tm;
         // -------------------------------------------------------------------------
 
         // go around the loop again, but
         // check the max loops for sanity
         if (pc >= MAX_LOOPS) break;
     }
-
-    if (DEBUG) DEBUG.displayRuntimeFooter();
-
-    return output;
 }
 

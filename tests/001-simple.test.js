@@ -10,6 +10,12 @@ import { powersOfTwo, countdown } from '../src/examples/Simple.js'
 ].forEach((exe) => {
     let [ name, program ] = exe;
     Debugger.displayProgram(name, program);
-    let output = Machine.runProgram(name, program, Debugger);
+    Debugger.displayRuntimeHeader(name);
+    let output = [];
+    for (const out of Machine.run(name, program, Debugger)) {
+        Debugger.displayMachineState(out);
+        output.push(out);
+    }
+    Debugger.displayRuntimeFooter();
     Debugger.displayProgramResults(name, output);
 })
