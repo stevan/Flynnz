@@ -1,5 +1,6 @@
 
 const MAX_LOOPS = 256;
+const DIVIDER   = '-'.repeat(120);
 
 const fmt = (n, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
     (atEnd
@@ -81,8 +82,8 @@ let countdown = [ // result should be 10 -> 1 range
     [ SCAN,  PUSH,  10,  1, TRUE,   ],
     [ SCAN,  DUP,  ___,  1, FALSE,  ],
     [ SCAN,  PUSH,   1,  1, FALSE,  ],
-    [ SCAN,  SUB,  ___,  1, FALSE,  ],
-    [ SCAN,  DUP,  ___,  1, TRUE,   ],
+    [ SCAN,  SUB,  ___,  1, TRUE,   ],
+    [ SCAN,  DUP,  ___,  1, FALSE,  ],
     [ SCAN,  PUSH,   1,  1, FALSE,  ],
     [ SCAN,  EQ,   ___,  1, FALSE,  ],
     [ JUMP,  EQZ,  ___, -6, FALSE,  ],
@@ -105,13 +106,15 @@ let popTest = [ // result should be 8
 // load the programs and run them all ...
 [
     [ 'popTest',     popTest     ],
-    //[ 'powersOfTwo', powersOfTwo ],
-    //[ 'countdown',   countdown   ],
+    [ 'powersOfTwo', powersOfTwo ],
+    [ 'countdown',   countdown   ],
 ].forEach((exe) => {
 
 let [ name, program ] = exe;
 
-console.group(`Loading Program := ${name}`)
+console.log(DIVIDER);
+console.log(`Loading Program := ${name}`)
+console.group(DIVIDER)
 console.log('+-------+--------+--------+--------+--------+');
 console.log('| STATE |     OP |   DATA | T(+/-) |  HEAP? |');
 console.log('+-------+--------+--------+--------+--------+');
@@ -125,12 +128,26 @@ console.groupEnd();
 let state = SCAN;
 let pc    = 0;
 let ip    = 0;
-let tos   = -1;
+let tos   = 0;
 
 // allocate the output log
 let output = [];
 
-console.group(`Running Program := ${name}`)
+// keep a shadow stack of indicies
+let sstack = [];
+let shadow = {
+    height   : function () { return sstack.length },
+    rhs      : function () { return sstack.at(0) },
+    lhs      : function () { return sstack.at(1) },
+    pop      : function ()  { sstack.shift() },
+    push     : function (n) { return sstack.unshift(n) },
+    unop     : function (n) { this.pop(); this.push(n) },
+    binop    : function (n) { this.pop(); this.pop(); this.push(n) },
+};
+
+console.log(DIVIDER);
+console.log(`Running Program := ${name}`)
+console.group(DIVIDER);
 
 // execute until we hit the end, or an error
 while (state != HALT && state != ERR) {
@@ -144,8 +161,10 @@ while (state != HALT && state != ERR) {
 
     //console.log('INSTRUCTION', program[ip]);
 
-    let rhs = tos;
-    let lhs = tos - 1;
+    let rhs = shadow.rhs();
+    let lhs = shadow.lhs();
+
+    //console.log('rhs', rhs, 'lhs', lhs, 'shadow', sstack.join(', '));
 
     // -------------------------------------------------------------------------
     // Apply state changes
@@ -171,7 +190,7 @@ while (state != HALT && state != ERR) {
             // negative numbers are only allowed
             // for jumps as a means of carrying
             // over the values to the next loop
-            temp = output[rhs - 3][0];
+            shadow.pop();
             break;
         default:
             // if we don't know the op, then we should halt and complain!
@@ -195,10 +214,12 @@ while (state != HALT && state != ERR) {
         // POP  (    n --       )
         case PUSH:
             temp = data;
+            shadow.push(tos);
             break;
         case DUP:
             // simply duplicate the previous stack value
             temp = output[rhs][0];
+            shadow.push(tos);
             break;
         // ----------------------------------------------
         // Pop is a little funny because it basically
@@ -207,6 +228,7 @@ while (state != HALT && state != ERR) {
         // most situations, but I am not 100% sure.
         // ----------------------------------------------
         case POP:
+            shadow.pop();
             break;
         // ----------------------------------------------
         // FIXME:
@@ -223,25 +245,25 @@ while (state != HALT && state != ERR) {
         // ----------------------------------------------
         // maths ...
         // ----------------------------------------------
-        case NEG: temp = -(output[rhs][0]); break;
-        case ADD: temp = output[lhs][0] + output[rhs][0]; break;
-        case SUB: temp = output[lhs][0] - output[rhs][0]; break;
-        case MUL: temp = output[lhs][0] * output[rhs][0]; break;
-        case DIV: temp = output[lhs][0] / output[rhs][0]; break;
-        case MOD: temp = output[lhs][0] % output[rhs][0]; break;
+        case NEG: temp = -(output[rhs][0]); shadow.unop(tos); break;
+        case ADD: temp = output[lhs][0] + output[rhs][0]; shadow.binop(tos); break;
+        case SUB: temp = output[lhs][0] - output[rhs][0]; shadow.binop(tos); break;
+        case MUL: temp = output[lhs][0] * output[rhs][0]; shadow.binop(tos); break;
+        case DIV: temp = output[lhs][0] / output[rhs][0]; shadow.binop(tos); break;
+        case MOD: temp = output[lhs][0] % output[rhs][0]; shadow.binop(tos); break;
         // ----------------------------------------------
         // comparison ...
         // ----------------------------------------------
-        case EQ: temp = output[lhs][0] == output[rhs][0] ? TRUE : FALSE; break;
-        case NE: temp = output[lhs][0] != output[rhs][0] ? TRUE : FALSE; break;
-        case LT: temp = output[lhs][0] <  output[rhs][0] ? TRUE : FALSE; break;
-        case LE: temp = output[lhs][0] <= output[rhs][0] ? TRUE : FALSE; break;
-        case GT: temp = output[lhs][0] >  output[rhs][0] ? TRUE : FALSE; break;
-        case GE: temp = output[lhs][0] >= output[rhs][0] ? TRUE : FALSE; break;
+        case EQ: temp = output[lhs][0] == output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
+        case NE: temp = output[lhs][0] != output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
+        case LT: temp = output[lhs][0] <  output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
+        case LE: temp = output[lhs][0] <= output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
+        case GT: temp = output[lhs][0] >  output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
+        case GE: temp = output[lhs][0] >= output[rhs][0] ? TRUE : FALSE; shadow.binop(tos); break;
         // ----------------------------------------------
         // logical ...
         // ----------------------------------------------
-        case NOT: temp = output[rhs][0] ? TRUE : FALSE; break;
+        case NOT: temp = output[rhs][0] ? TRUE : FALSE; shadow.unop(tos); break;
         case AND: temp = output[lhs][0] && output[rhs][0] ? TRUE : FALSE; break;
         case OR:  temp = output[lhs][0] || output[rhs][0] ? TRUE : FALSE; break;
         // ----------------------------------------------
@@ -278,14 +300,14 @@ while (state != HALT && state != ERR) {
         console.log('-'.repeat(45));
         break;
     case SCAN:
-        console.log(`${fmt(pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
+        console.log(`${fmt(pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)}) [${sstack.join(', ')}]`);
         break;
     }
 
     // -------------------------------------------------------------------------
     // Write to the output
     // -------------------------------------------------------------------------
-    output[pc] = [ temp, retain, ip, op, st, rhs, lhs ];
+    output[pc] = [ temp, tos, rhs, lhs, st, op, ip, retain ];
 
     // -------------------------------------------------------------------------
     // Update system loop state
@@ -303,17 +325,18 @@ while (state != HALT && state != ERR) {
 
 console.groupEnd();
 
-
-console.group(`Program Results := ${name}`)
-console.log('+-------+--------+--------+--------+--------+');
-console.log('|  HEAP |  STACK |     IP |     OP |  STATE |');
-console.log('+-------+--------+--------+--------+--------+');
+console.log(DIVIDER);
+console.log(`Program Results := ${name}`)
+console.group(DIVIDER);
+console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
+console.log('| STACK |    TOS |   RHS  |    LHS |  STATE |     OP |     IP |  KEEP? |');
+console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
 output
-//.filter((row) => row[1] == TRUE)
+.filter((row) => row.at(-1) == TRUE)
 .forEach((row, idx) => {
     console.log('|' + row.map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
 });
-console.log('+-------+--------+--------+--------+--------+');
+console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
 console.groupEnd();
 
 
