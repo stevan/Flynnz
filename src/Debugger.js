@@ -9,6 +9,22 @@ export const fmt = (n, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
         : (_st, _w, _s) => _st.padStart(_w, _s)
     )((n == null ? nullRepr : n.toString()), w, s)
 
+export function runPrograms (machine, programs) {
+    programs.forEach((prog) => {
+        let [ name, program ] = prog;
+
+        displayProgram(name, program);
+        displayRuntimeHeader(name);
+        let output = [];
+        for (const out of machine.run(name, program)) {
+            displayMachineState(out);
+            output.push(out);
+        }
+        displayRuntimeFooter();
+        displayProgramResults(name, output);
+    });
+}
+
 
 export function displayProgram (name, program) {
     console.log(DIVIDER);

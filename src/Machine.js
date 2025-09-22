@@ -67,7 +67,7 @@ function yieldMachineOutput (temp, st, ms, program) {
 
 // -----------------------------------------------------------------------------
 
-export function *run (name, program, DEBUG) {
+export function *run (name, program) {
 
     let ms     = initMachineState();
     let shadow = getShadowStack(ms);
