@@ -1,5 +1,5 @@
 
-import { SCAN, JUMP, HALT, ERR, ___, TRUE, FALSE, } from '../src/ISA.js'
+import { SCAN, JUMP, HALT, ERR, ___, TRUE, FALSE, } from './ISA.js'
 
 export const DIVIDER   = '-'.repeat(120);
 

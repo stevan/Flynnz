@@ -7,6 +7,16 @@ export const ___ = null;
 export const TRUE  = 1;
 export const FALSE = 0;
 
+// -----------------------------------------------------------------------------
+// Instructions
+// -----------------------------------------------------------------------------
+// 1) machine state to transition to
+// 2) machine operation to perform
+// 3) immediate data needed for the op
+// 4) direction and distance of next tape move
+// 6) keep value for the heap?
+// -----------------------------------------------------------------------------
+
 // ---------------------------
 export const SCAN = 'SCAN';
 // ---------------------------

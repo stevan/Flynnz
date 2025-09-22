@@ -1,5 +1,5 @@
 
-import { MAX_LOOPS } from '../src/Constants.js'
+import { MAX_LOOPS } from './Constants.js'
 import {
     SCAN, JUMP, HALT, ERR,
     PUSH, DUP, POP, SWAP, ROT,
@@ -8,7 +8,7 @@ import {
     NOT, AND, OR,
     EQZ, ANY,
     TRUE, FALSE,
-} from '../src/ISA.js'
+} from './ISA.js'
 
 export function initShadowStack () {
     // keep a shadow stack of indicies
