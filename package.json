@@ -6,5 +6,6 @@
   "scripts": {
     "build" : "rm -rf ./js && tsc",
     "test"  : "rm -rf ./js && tsc && node --test js/tests/*.test.js"
-  }
+  },
+  "type" : "module"
 }

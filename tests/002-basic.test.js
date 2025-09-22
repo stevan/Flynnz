@@ -1,61 +1,15 @@
 
-const MAX_LOOPS = 256;
-const DIVIDER   = '-'.repeat(120);
+import { MAX_LOOPS, ___, TRUE, FALSE, } from '../src/Constants.js'
+import * as Debugger from '../src/Debugger.js'
 
-const fmt = (n, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
-    (atEnd
-        ? (_st, _w, _s) => _st.padEnd(_w, _s)
-        : (_st, _w, _s) => _st.padStart(_w, _s)
-    )((n == null ? nullRepr : n.toString()), w, s)
-
-// -----------------------------------------------------------------------------
-// Useful constants
-// -----------------------------------------------------------------------------
-
-const ___ = null;
-
-const TRUE  = 1;
-const FALSE = 0;
-
-// -----------------------------------------------------------------------------
-// Instruction Set
-// -----------------------------------------------------------------------------
-
-const SCAN = 'SCAN';
-    const PUSH = 'PUSH';
-    const DUP  = 'DUP';
-    const POP  = 'POP';
-    const SWAP = 'SWAP';
-    const ROT  = 'ROT';
-
-    const NEG = 'NEG'
-    const ADD = 'ADD';
-    const SUB = 'SUB';
-    const MUL = 'MUL';
-    const DIV = 'DIV';
-    const MOD = 'MOD';
-
-    const EQ = 'EQ';
-    const NE = 'NE';
-    const LT = 'LT';
-    const LE = 'LE';
-    const GT = 'GT';
-    const GE = 'GE';
-
-    const NOT = 'NOT';
-    const AND = 'AND';
-    const OR  = 'OR';
-
-const JUMP  = 'JUMP';
-    const EQZ = 'EQZ';
-    const ANY = 'ANY';
-
-const ERR  = 'ERR';
-    const INVALID_STATE     = 'INVALID M STATE';
-    const INVALID_SCAN_OP   = 'INVALID SCAN OP';
-    const INVALID_JUMP_OP   = 'INVALID JUMP OP';
-
-const HALT = 'HALT';
+import {
+    SCAN, JUMP, HALT, ERR,
+    PUSH, DUP, POP, SWAP, ROT,
+    NEG, ADD, SUB, MUL, DIV, MOD,
+    EQ, NE, LT, LE, GT, GE,
+    NOT, AND, OR,
+    EQZ, ANY,
+} from '../src/ISA.js'
 
 // -----------------------------------------------------------------------------
 // Instructions
@@ -112,17 +66,7 @@ let popTest = [ // result should be 8
 
 let [ name, program ] = exe;
 
-console.log(DIVIDER);
-console.log(`Loading Program := ${name}`)
-console.group(DIVIDER)
-console.log('+-------+--------+--------+--------+--------+');
-console.log('| STATE |     OP |   DATA | T(+/-) |  HEAP? |');
-console.log('+-------+--------+--------+--------+--------+');
-program.forEach((row, idx) => {
-    console.log('|' + row.map((v) => fmt(v, 6, ' ', false, '______')).join(' | ') + ' |')
-});
-console.log('+-------+--------+--------+--------+--------+');
-console.groupEnd();
+Debugger.displayProgram(name, program);
 
 // initialize system state
 let state = SCAN;
@@ -151,9 +95,7 @@ let shadow = {
     binop    : function (n) { this.pop(); this.pop(); this.push(n) },
 };
 
-console.log(DIVIDER);
-console.log(`Running Program := ${name}`)
-console.group(DIVIDER);
+Debugger.displayRuntimeHeader(name);
 
 // execute until we hit the end, or an error
 while (state != HALT && state != ERR) {
@@ -227,22 +169,11 @@ while (state != HALT && state != ERR) {
             temp = output[rhs][0];
             shadow.push(tos);
             break;
-        // ----------------------------------------------
-        // Pop is a little funny because it basically
-        // just tells the next operation to ignore the
-        // top of stack, which I think will work for
-        // most situations, but I am not 100% sure.
-        // ----------------------------------------------
         case POP:
             shadow.pop();
             break;
         // ----------------------------------------------
-        // FIXME:
-        // ----------------------------------------------
-        // These are tricky because they require changing
-        // the previous stack state, which we do not want
-        // to do within the log, ... not sure how to do
-        // it yet, so we leave this here.
+        // TODO:
         // ----------------------------------------------
         // SWAP (   a b -- b a   )
         // ROT  ( a b c -- c b a )
@@ -290,25 +221,7 @@ while (state != HALT && state != ERR) {
     // -------------------------------------------------------------------------
     // Send information to the console about what we are doing
     // -------------------------------------------------------------------------
-    switch (st) {
-    case HALT:
-        console.log(`${fmt(pc, 5)} HALT [!!!!!!] [!!!!!!] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
-        console.log('='.repeat(45));
-        break;
-    case ERR:
-        console.log('!'.repeat(45));
-        console.log(`${fmt(pc, 5)} ERR  [${fmt(op, 15, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
-        console.log('!'.repeat(45));
-        break;
-    case JUMP:
-        console.log('-'.repeat(45));
-        console.log(`${fmt(pc, 5)} JUMP [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)})`);
-        console.log('-'.repeat(45));
-        break;
-    case SCAN:
-        console.log(`${fmt(pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(tos)}) [${sstack.join(', ')}]`);
-        break;
-    }
+    Debugger.displayMachineState(pc, ip, st, op, tos, temp, sstack);
 
     // -------------------------------------------------------------------------
     // Write to the output
@@ -328,21 +241,9 @@ while (state != HALT && state != ERR) {
     // check the max loops for sanity
     if (pc >= MAX_LOOPS) break;
 }
-console.groupEnd();
 
-console.log(DIVIDER);
-console.log(`Program Results := ${name}`)
-console.group(DIVIDER);
-console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
-console.log('| STACK |    TOS |   RHS  |    LHS |  STATE |     OP |     IP |  KEEP? |');
-console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
-output
-.filter((row) => row.at(-1) == TRUE)
-.forEach((row, idx) => {
-    console.log('|' + row.map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
-});
-console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
-console.groupEnd();
+Debugger.displayRuntimeFooter();
+Debugger.displayProgramResults(name, output);
 
 
 }); // end the programs loop - DO NOT REMOVE
