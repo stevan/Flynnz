@@ -1,6 +1,6 @@
 
 import * as Debugger from '../src/Debugger.js'
-import * as Machine  from '../src/Machine.js'
+import * as Machine  from '../src/machines/SISD.js'
 
 import {
     SCAN, JUMP, HALT, ERR,
