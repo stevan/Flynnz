@@ -12,7 +12,7 @@ import {
     ___, TRUE, FALSE,
 } from '../src/ISA.js'
 
-export const countdown = [ // result should be 10 -> 1 range
+export const countdown = [
     [ SCAN,  PUSH,  10,  1, TRUE,   ],
     [ SCAN,  DUP,  ___,  1, FALSE,  ],
     [ SCAN,  PUSH,   1,  1, FALSE,  ],
@@ -28,3 +28,4 @@ export const countdown = [ // result should be 10 -> 1 range
 Debugger.runPrograms(Machine, [
     [ 'countdown', countdown ],
 ]);
+
