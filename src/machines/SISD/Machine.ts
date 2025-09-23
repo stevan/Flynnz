@@ -18,6 +18,11 @@ import {
 } from '../../ISA'
 
 import {
+    InputChannel,
+    OutputChannel,
+} from '../IO/Channels'
+
+import {
     MachineState,
     MachineStateSnapshot,
 } from './MachineState'
@@ -31,16 +36,20 @@ export class Machine {
     constructor(
         public state    : MachineState,
         public program  : Instruction[],
-        public input    : Immediate[],
-        public output   : Immediate[],
+        public input    : InputChannel,
+        public output   : OutputChannel,
     ) {}
 
-    static load (program : Instruction[], input : Immediate[] = [], output : Immediate[] = []) : Machine {
+    static load (program : Instruction[], input? : InputChannel | number[], output? : OutputChannel) : Machine {
         return new Machine(
             MachineState.initialState(),
             program,
-            input,
-            output,
+            (input == undefined
+                ? new InputChannel()
+                : Array.isArray(input)
+                    ? new InputChannel(...input)
+                    : input),
+            (output ?? new OutputChannel()),
         )
     }
 
@@ -85,11 +94,11 @@ export class Machine {
         case COMM:
             switch (op) {
             case GET:
-                temp = this.state.PUSH(this.input.shift() as Immediate);
+                temp = this.state.PUSH(this.input.readValue() as Immediate);
                 break;
             case PUT:
                 temp = this.state.getValueAtTOS();
-                this.output.push(temp);
+                this.output.writeValue(temp);
                 break;
             default:
                 // if we don't know the op, then we should halt and complain!

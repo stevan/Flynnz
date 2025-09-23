@@ -12,6 +12,8 @@ import {
     MachineLog,
 } from './machines/SISD/Machine'
 
+import { InputChannel, OutputChannel } from './machines/IO/Channels'
+
 export const DIVIDER   = '-'.repeat(120);
 
 export const fmt = (n : any, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
@@ -91,12 +93,12 @@ export function displayMachineState (log : MachineLog) : void {
     }
 }
 
-export function displayProgramResults (name : string, log : MachineLog[], input : any[], output : any[], filter : boolean) : void {
+export function displayProgramResults (name : string, log : MachineLog[], input : InputChannel, output : OutputChannel, filter : boolean) : void {
     console.log(DIVIDER);
     console.log(`Program Results := ${name}`)
     console.group(DIVIDER);
-    if (Array.isArray(input))  console.log('INPUT:', input.join(','));
-    if (Array.isArray(output)) console.log('OUTPUT:', output.join(', '));
+    console.log('INPUT:', input.source.join(','));
+    console.log('OUTPUT:', output.sink.join(', '));
     console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
     console.log('| STACK |    TOS |   RHS  |    LHS |  STATE |     OP |     IP |  KEEP? |');
     console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');

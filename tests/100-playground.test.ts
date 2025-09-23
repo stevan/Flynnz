@@ -1,6 +1,7 @@
 
 import * as Debugger from '../src/Debugger'
 import { Machine } from '../src/machines/SISD/Machine'
+import { InputChannel, OutputChannel } from '../src/machines/IO/Channels'
 
 import {
     SCAN, COMM, JUMP, HALT, ERR,
@@ -31,6 +32,6 @@ export const countdown : Instruction[] = [
 ];
 
 Debugger.runPrograms([
-    [ 'countdown', Machine.load( countdown, [ 10 ], [] ), true ],
+    [ 'countdown', Machine.load(countdown, [ 10 ]), true ],
 ]);
 
