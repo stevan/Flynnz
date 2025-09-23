@@ -12,45 +12,118 @@ import {
 
 // -----------------------------------------------------------------------------
 
-function initShadowStack () {
-    // keep a shadow stack with indicies
-    // of things in the output log so
-    // that we can always easily get
-    // the current stack values without
-    // needing to keep the output log
-    // accessible
-    let stack = [];
-    return {
-        toArray  : function () { return stack.map((e) => e[1]) },
-        height   : function () { return stack.length },
+class MachineState {
+    state;
+    pc;
+    ip;
+    stack;
 
-        rhs      : function () { return stack.at(0)?.at(1) },
-        lhs      : function () { return stack.at(1)?.at(1) },
+    constructor(state, pc, ip, stack) {
+        this.state = state;
+        this.pc    = pc;
+        this.ip    = ip;
+        this.stack = stack;
+    }
 
-        pop      : function ()     { stack.shift() },
-        push     : function (n, v) { stack.unshift([n, v]) },
+    static initialState () {
+        return new MachineState(SCAN, 0, 0, [])
+    }
 
-        unop     : function (n, v) { this.pop(); this.push(n, v) },
-        binop    : function (n, v) { this.pop(); this.pop(); this.push(n, v) },
-    };
+    // -------------------------------------------------------------------------
+
+    isRunning () { return this.state != HALT && this.state != ERR }
+    isHalted  () { return this.state == HALT }
+    hasError  () { return this.state == ERR  }
+
+    advance (nextState, tapeMovement) {
+        this.state = nextState;
+        this.ip   += tapeMovement;
+        this.pc   += 1;
+    }
+
+    checkIfZero () {
+        let [ idx, value ] = this.stack.pop();
+        return value == FALSE ? true : false;
+    }
+
+    rhsIndex () { return this.stack[ this.stack.length - 1 ]?.at(0) }
+    lhsIndex () { return this.stack[ this.stack.length - 2 ]?.at(0) }
+
+    stackValues () { return this.stack.map((p) => p[1]) }
+
+    // -------------------------------------------------------------------------
+    // Stack Operations
+    // -------------------------------------------------------------------------
+
+    // PUSH  (      -- n      )
+    // POP   (    n --        )
+    // DUP   (    n -- n n    )
+    // SWAP  (   a b -- b a   )
+    // ROT   ( a b c -- c b a )
+    // BINOP (   a b -- c     )
+    // UNOP  (     a -- b     )
+
+    // these produce new values, so they will return them
+    // so they can be stored as a temp in the loop
+
+    PUSH (value) {
+        this.stack.push([ this.pc, value ]);
+        return value;
+    }
+
+    DUP  () {
+        let [ idx, top ] = this.stack[ this.stack.length - 1 ];
+        this.PUSH(top);
+        return top;
+    }
+
+    BINOP (f) {
+        let [ ridx, rhs ] = this.stack.pop();
+        let [ lidx, lhs ] = this.stack.pop();
+        return this.PUSH( f( lhs, rhs ) );
+    }
+
+    UNOP (f) {
+        let [ ridx, rhs ] = this.stack.pop();
+        return this.PUSH( f( rhs ) );
+    }
+
+    // these just re-arrange (or remove)
+    // so no index updates, just local moves
+
+    POP  () { this.stack.pop() }
+
+    SWAP () {
+        let x = this.stack[ this.stack.length - 2 ];
+        let y = this.stack[ this.stack.length - 1 ];
+        this.stack[ this.stack.length - 1 ] = x;
+        this.stack[ this.stack.length - 2 ] = y;
+    }
+    ROT () {
+        let x = this.stack[ this.stack.length - 3 ];
+        let y = this.stack[ this.stack.length - 2 ];
+        let z = this.stack[ this.stack.length - 1 ];
+        this.stack[ this.stack.length - 1 ] = y;
+        this.stack[ this.stack.length - 2 ] = x;
+        this.stack[ this.stack.length - 3 ] = z;
+    }
 }
 
 // -----------------------------------------------------------------------------
 
-export function *run (name, program, DEBUG) {
+export function *run (program) {
 
-    let [ state, pc, ip, shadow ] = [ SCAN, 0, 0, initShadowStack() ]
+    let machine = MachineState.initialState();
 
     // execute until we hit the end, or an error
-    while (state != HALT && state != ERR) {
+    while (machine.isRunning()) {
 
         // ---------------------------------------------------------------------
         // Decode the instruction
         // ---------------------------------------------------------------------
-        let instruction = program[ip];
+        let instruction = program[machine.ip];
         let [ st, op, data, tm, retain ] = instruction;
 
-        // loop local variables
         let temp;
 
         // ---------------------------------------------------------------------
@@ -67,13 +140,12 @@ export function *run (name, program, DEBUG) {
                 break;
             case EQZ:
                 // conditional jump, just goto the IP if zero
-                tm = shadow.rhs() == 0 ? tm : 1;
-                shadow.pop();
+                tm = machine.checkIfZero() ? tm : 1;
                 break;
             default:
                 // if we don't know the op, then we should halt and complain!
                 st = ERR;
-                op = INVALID_JUMP_OP;
+                //op = INVALID_JUMP_OP;
                 break;
             }
             break;
@@ -85,85 +157,65 @@ export function *run (name, program, DEBUG) {
             // ----------------------------------------------
             // stack ops ...
             // ----------------------------------------------
-            // These are done and should be fine
-            // ----------------------------------------------
-            // PUSH (      -- n     )
-            // DUP  (    n -- n n   )
-            // POP  (    n --       )
-            case PUSH:
-                temp = data;
-                shadow.push(pc, temp);
-                break;
-            case DUP:
-                // simply duplicate the previous stack value
-                temp = shadow.rhs();
-                shadow.push(pc, temp);
-                break;
-            case POP:
-                shadow.pop();
-                break;
-            // ----------------------------------------------
-            // TODO:
-            // ----------------------------------------------
-            // SWAP (   a b -- b a   )
-            // ROT  ( a b c -- c b a )
-            // ----------------------------------------------
-
+            // adds new values, so returns new temp
+            case PUSH : temp = machine.PUSH(data); break;
+            case DUP  : temp = machine.DUP();      break;
+            // just alters the stack, no temp needed
+            case POP  : machine.POP();  break;
+            case SWAP : machine.SWAP(); break;
+            case ROT  : machine.ROT();  break;
             // ----------------------------------------------
             // maths ...
             // ----------------------------------------------
-            case NEG: temp = -(shadow.rhs()); shadow.unop(pc, temp); break;
-            case ADD: temp = shadow.lhs() + shadow.rhs(); shadow.binop(pc, temp); break;
-            case SUB: temp = shadow.lhs() - shadow.rhs(); shadow.binop(pc, temp); break;
-            case MUL: temp = shadow.lhs() * shadow.rhs(); shadow.binop(pc, temp); break;
-            case DIV: temp = shadow.lhs() / shadow.rhs(); shadow.binop(pc, temp); break;
-            case MOD: temp = shadow.lhs() % shadow.rhs(); shadow.binop(pc, temp); break;
+            case NEG: temp = machine.UNOP((x) => -x); break;
+            case ADD: temp = machine.BINOP((n, m) => n + m ); break;
+            case SUB: temp = machine.BINOP((n, m) => n - m ); break;
+            case MUL: temp = machine.BINOP((n, m) => n * m ); break;
+            case DIV: temp = machine.BINOP((n, m) => n / m ); break;
+            case MOD: temp = machine.BINOP((n, m) => n % m ); break;
             // ----------------------------------------------
             // comparison ...
             // ----------------------------------------------
-            case EQ: temp = shadow.lhs() == shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
-            case NE: temp = shadow.lhs() != shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
-            case LT: temp = shadow.lhs() <  shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
-            case LE: temp = shadow.lhs() <= shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
-            case GT: temp = shadow.lhs() >  shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
-            case GE: temp = shadow.lhs() >= shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case EQ: temp = machine.BINOP((n, m) => n == m ? TRUE : FALSE); break;
+            case NE: temp = machine.BINOP((n, m) => n != m ? TRUE : FALSE); break;
+            case LT: temp = machine.BINOP((n, m) => n <  m ? TRUE : FALSE); break;
+            case LE: temp = machine.BINOP((n, m) => n <= m ? TRUE : FALSE); break;
+            case GT: temp = machine.BINOP((n, m) => n >  m ? TRUE : FALSE); break;
+            case GE: temp = machine.BINOP((n, m) => n >= m ? TRUE : FALSE); break;
             // ----------------------------------------------
             // logical ...
             // ----------------------------------------------
-            case NOT: temp = shadow.rhs() ? TRUE : FALSE; shadow.unop(pc, temp); break;
-            case AND: temp = shadow.lhs() && shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
-            case OR:  temp = shadow.lhs() || shadow.rhs() ? TRUE : FALSE; shadow.binop(pc, temp); break;
+            case NOT: temp = machine.UNOP((x) => x ? TRUE : FALSE); break;
+            case AND: temp = machine.BINOP((n, m) => n && m ? TRUE : FALSE); break;
+            case OR:  temp = machine.BINOP((n, m) => n || m ? TRUE : FALSE); break;
             // ----------------------------------------------
             default:
                 // if we don't know the op, then we should halt and complain!
                 st = ERR;
-                op = INVALID_SCAN_OP;
+                //op = INVALID_SCAN_OP;
                 break;
             }
             break;
         default:
             // if we don't know the state, then we should halt and complain!
             st = ERR;
-            op = INVALID_STATE;
+            //op = INVALID_STATE;
             break;
         }
 
         // ---------------------------------------------------------------------
         // Write to the output
         // ---------------------------------------------------------------------
-        yield [ temp, st, pc, ip, instruction, shadow ];
+        yield [ temp, st, instruction, machine ]
 
         // ---------------------------------------------------------------------
         // Update system loop state
         // ---------------------------------------------------------------------
-        state = st;
-        pc   += 1;
-        ip   += tm;
-        // ---------------------------------------------------------------------
+        machine.advance(st, tm);
 
         // go around the loop again, but
         // check the max loops for sanity
-        if (pc >= MAX_LOOPS) break;
+        if (machine.pc >= MAX_LOOPS) break;
     }
 }
 

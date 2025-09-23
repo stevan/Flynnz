@@ -16,7 +16,7 @@ export function runPrograms (machine, programs) {
         displayProgram(name, program);
         displayRuntimeHeader(name);
         let output = [];
-        for (const out of machine.run(name, program)) {
+        for (const out of machine.run(program)) {
             displayMachineState(out);
             output.push(out);
         }
@@ -52,26 +52,26 @@ export function displayRuntimeFooter() {
 }
 
 export function displayMachineState (state) {
-    let [ temp, st, pc, ip, instruction, shadow ] = state;
+    let [ temp, st, instruction, machine ] = state;
     let op = instruction[1];
 
     switch (st) {
     case HALT:
-        console.log(`${fmt(pc, 5)} HALT [!!!!!!] [!!!!!!] IP(${fmt(ip)}) : TOS(${fmt(pc)})`);
+        console.log(`${fmt(machine.pc, 5)} HALT [!!!!!!] [!!!!!!] IP(${fmt(machine.ip)}) : TOS(${fmt(machine.pc)})`);
         console.log('='.repeat(45));
         break;
     case ERR:
         console.log('!'.repeat(45));
-        console.log(`${fmt(pc, 5)} ERR  [${fmt(op, 15, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(pc)})`);
+        console.log(`${fmt(machine.pc, 5)} ERR  [${fmt(op, 15, ' ')}] IP(${fmt(machine.ip)}) : TOS(${fmt(machine.pc)})`);
         console.log('!'.repeat(45));
         break;
     case JUMP:
         console.log('-'.repeat(45));
-        console.log(`${fmt(pc, 5)} JUMP [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(pc)})`);
+        console.log(`${fmt(machine.pc, 5)} JUMP [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(machine.ip)}) : TOS(${fmt(machine.pc)})`);
         console.log('-'.repeat(45));
         break;
     case SCAN:
-        console.log(`${fmt(pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(ip)}) : TOS(${fmt(pc)}) [${shadow.toArray().join(', ')}]`);
+        console.log(`${fmt(machine.pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(machine.ip)}) : TOS(${fmt(machine.pc)}) [${machine.stackValues().join(', ')}]`);
         break;
     }
 }
@@ -85,10 +85,10 @@ export function displayProgramResults (name, output, filter = true) {
     console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
     output
     .forEach((row) => {
-        let [ temp, st, pc, ip, instruction, shadow ] = row;
+        let [ temp, st, instruction, machine ] = row;
         let [ _st, op, data, tm, retain ] = instruction;
         if (filter && retain != TRUE) return;
-        console.log('|' + [ temp, pc, shadow.rhs(), shadow.lhs(), st, op, ip, retain ].map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
+        console.log('|' + [ temp, machine.pc, machine.rhsIndex(), machine.lhsIndex(), st, op, machine.ip, retain ].map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
     });
     console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
     console.groupEnd();
