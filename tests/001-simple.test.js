@@ -1,6 +1,6 @@
 
 import * as Debugger from '../src/Debugger.js'
-import * as Machine  from '../src/machines/SISD.js'
+import * as Machine  from '../src/machines/SISD/Machine.js'
 
 import { powersOfTwo, countdown } from '../src/examples/Simple.js'
 
