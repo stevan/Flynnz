@@ -1,5 +1,5 @@
 
-import { SCAN, JUMP, HALT, ERR, TRUE, FALSE, } from '../../ISA.js'
+import { SCAN, COMM, JUMP, HALT, ERR, TRUE, FALSE, } from '../../ISA.js'
 
 export class MachineState {
     state;
@@ -42,6 +42,11 @@ export class MachineState {
 
     stackValues () { return this.stack.map((p) => p[1]) }
 
+    getValueAtTOS () {
+        let [ idx, top ] = this.stack[ this.stack.length - 1 ];
+        return top;
+    }
+
     // -------------------------------------------------------------------------
     // Stack Operations
     // -------------------------------------------------------------------------
@@ -62,11 +67,7 @@ export class MachineState {
         return value;
     }
 
-    DUP  () {
-        let [ idx, top ] = this.stack[ this.stack.length - 1 ];
-        this.PUSH(top);
-        return top;
-    }
+    DUP  () { return this.PUSH(this.getValueAtTOS()) }
 
     BINOP (f) {
         let [ ridx, rhs ] = this.stack.pop();

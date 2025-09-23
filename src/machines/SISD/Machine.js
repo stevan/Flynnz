@@ -1,18 +1,19 @@
 
 import { MAX_LOOPS } from '../../Constants.js'
 import {
-    SCAN, JUMP, HALT, ERR,
+    SCAN, COMM, JUMP, HALT, ERR,
     PUSH, DUP, POP, SWAP, ROT,
     NEG, ADD, SUB, MUL, DIV, MOD,
     EQ, NE, LT, LE, GT, GE,
     NOT, AND, OR,
+    GET, PUT,
     EQZ, ANY,
     TRUE, FALSE,
 } from '../../ISA.js'
 
 import { MachineState } from './MachineState.js'
 
-export function *run (program) {
+export function *run (program, input, output) {
 
     let machine = MachineState.initialState();
 
@@ -46,7 +47,21 @@ export function *run (program) {
             default:
                 // if we don't know the op, then we should halt and complain!
                 st = ERR;
-                //op = INVALID_JUMP_OP;
+                break;
+            }
+            break;
+        case COMM:
+            switch (op) {
+            case GET:
+                temp = machine.PUSH(input.shift());
+                break;
+            case PUT:
+                temp = machine.getValueAtTOS();
+                output.push(temp);
+                break;
+            default:
+                // if we don't know the op, then we should halt and complain!
+                st = ERR;
                 break;
             }
             break;
@@ -93,14 +108,12 @@ export function *run (program) {
             default:
                 // if we don't know the op, then we should halt and complain!
                 st = ERR;
-                //op = INVALID_SCAN_OP;
                 break;
             }
             break;
         default:
             // if we don't know the state, then we should halt and complain!
             st = ERR;
-            //op = INVALID_STATE;
             break;
         }
 

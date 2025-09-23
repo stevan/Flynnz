@@ -45,6 +45,13 @@ export const AND = 'AND';
 export const OR  = 'OR';
 
 // ---------------------------
+export const COMM = 'COMM';
+// ---------------------------
+
+export const PUT = 'PUT';
+export const GET = 'GET';
+
+// ---------------------------
 export const JUMP  = 'JUMP';
 // ---------------------------
 
@@ -54,10 +61,6 @@ export const ANY = 'ANY';
 // ---------------------------
 export const ERR  = 'ERR';
 // ---------------------------
-
-export const INVALID_STATE     = 'INVALID M STATE';
-export const INVALID_SCAN_OP   = 'INVALID SCAN OP';
-export const INVALID_JUMP_OP   = 'INVALID JUMP OP';
 
 // ---------------------------
 export const HALT = 'HALT';

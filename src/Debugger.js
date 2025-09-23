@@ -1,5 +1,5 @@
 
-import { SCAN, JUMP, HALT, ERR, ___, TRUE, FALSE, } from './ISA.js'
+import { SCAN, COMM, JUMP, HALT, ERR, ___, TRUE, FALSE, } from './ISA.js'
 
 export const DIVIDER   = '-'.repeat(120);
 
@@ -11,17 +11,17 @@ export const fmt = (n, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
 
 export function runPrograms (machine, programs) {
     programs.forEach((prog) => {
-        let [ name, program ] = prog;
+        let [ name, program, input, output, filter ] = prog;
 
         displayProgram(name, program);
         displayRuntimeHeader(name);
-        let output = [];
-        for (const out of machine.run(program)) {
-            displayMachineState(out);
-            output.push(out);
+        let log = [];
+        for (const entry of machine.run(program, input, output)) {
+            displayMachineState(entry);
+            log.push(entry);
         }
         displayRuntimeFooter();
-        displayProgramResults(name, output);
+        displayProgramResults(name, log, input, output, filter ?? true );
     });
 }
 
@@ -70,20 +70,27 @@ export function displayMachineState (state) {
         console.log(`${fmt(machine.pc, 5)} JUMP [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(machine.ip)}) : TOS(${fmt(machine.pc)})`);
         console.log('-'.repeat(45));
         break;
+    case COMM:
+        console.log('-'.repeat(45));
+        console.log(`${fmt(machine.pc, 5)} COMM [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(machine.ip)}) : TOS(${fmt(machine.pc)})`);
+        console.log('-'.repeat(45));
+        break;
     case SCAN:
         console.log(`${fmt(machine.pc, 5)} SCAN [${fmt(op, 6, ' ')}] [${fmt(temp, 6, ' ')}] IP(${fmt(machine.ip)}) : TOS(${fmt(machine.pc)}) [${machine.stackValues().join(', ')}]`);
         break;
     }
 }
 
-export function displayProgramResults (name, output, filter = true) {
+export function displayProgramResults (name, log, input, output, filter) {
     console.log(DIVIDER);
     console.log(`Program Results := ${name}`)
     console.group(DIVIDER);
+    console.log('INPUT:', input.join(','));
+    console.log('OUTPUT:', output.join(', '));
     console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
     console.log('| STACK |    TOS |   RHS  |    LHS |  STATE |     OP |     IP |  KEEP? |');
     console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
-    output
+    log
     .forEach((row) => {
         let [ temp, st, instruction, machine ] = row;
         let [ _st, op, data, tm, retain ] = instruction;

@@ -1,10 +1,11 @@
 
 import {
-    SCAN, JUMP, HALT, ERR,
+    SCAN, COMM, JUMP, HALT, ERR,
     PUSH, DUP, POP, SWAP, ROT,
     NEG, ADD, SUB, MUL, DIV, MOD,
     EQ, NE, LT, LE, GT, GE,
     NOT, AND, OR,
+    GET, PUT,
     EQZ, ANY,
     ___, TRUE, FALSE,
 } from '../ISA.js'

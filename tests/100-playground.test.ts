@@ -3,20 +3,23 @@ import * as Debugger from '../src/Debugger.js'
 import * as Machine  from '../src/machines/SISD/Machine.js'
 
 import {
-    SCAN, JUMP, HALT, ERR,
+    SCAN, COMM, JUMP, HALT, ERR,
     PUSH, DUP, POP, SWAP, ROT,
     NEG, ADD, SUB, MUL, DIV, MOD,
     EQ, NE, LT, LE, GT, GE,
     NOT, AND, OR,
+    GET, PUT,
     EQZ, ANY,
     ___, TRUE, FALSE,
 } from '../src/ISA.js'
 
 export const countdown = [
-    [ SCAN,  PUSH,  10,  1, TRUE,   ],
+    [ COMM,  GET,  ___,  1, FALSE,  ],
+    [ COMM,  PUT,  ___,  1, FALSE,  ],
     [ SCAN,  DUP,  ___,  1, FALSE,  ],
     [ SCAN,  PUSH,   1,  1, FALSE,  ],
-    [ SCAN,  SUB,  ___,  1, TRUE,   ],
+    [ SCAN,  SUB,  ___,  1, FALSE,  ],
+    [ COMM,  PUT,  ___,  1, FALSE,  ],
     [ SCAN,  DUP,  ___,  1, FALSE,  ],
     [ SCAN,  PUSH,   1,  1, FALSE,  ],
     [ SCAN,  EQ,   ___,  1, FALSE,  ],
@@ -24,8 +27,8 @@ export const countdown = [
     [ HALT,  ___,  ___,  0, FALSE,  ],
 ];
 
-
 Debugger.runPrograms(Machine, [
-    [ 'countdown', countdown ],
+    [ 'countdown', countdown, [ 10 ], [] ],
 ]);
+
 
