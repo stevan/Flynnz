@@ -1,5 +1,5 @@
 
-import { MAX_LOOPS } from '../../Constants.js'
+import { MAX_LOOPS } from '../../Constants'
 import {
     SCAN, COMM, JUMP, HALT, ERR,
     PUSH, DUP, POP, SWAP, ROT,
@@ -9,24 +9,33 @@ import {
     GET, PUT,
     EQZ, ANY,
     TRUE, FALSE,
-} from '../../ISA.js'
 
-import { MachineState } from './MachineState.js'
+    Instruction,
+    OperationalState,
+    TapeMovement,
+    Immediate,
+
+} from '../../ISA'
+
+import {
+    MachineState,
+    MachineStateSnapshot,
+} from './MachineState'
+
+export type Temporary = Immediate | null
+
+export type MachineLog = [ Temporary, OperationalState, Instruction, MachineStateSnapshot ]
 
 export class Machine {
-    state;
-    program;
-    input;
-    output;
 
-    constructor (state, program, input, output) {
-        this.state   = state;
-        this.program = program;
-        this.input   = input;
-        this.output  = output;
-    }
+    constructor(
+        public state    : MachineState,
+        public program  : Instruction[],
+        public input    : Immediate[],
+        public output   : Immediate[],
+    ) {}
 
-    static load (program, input, output) {
+    static load (program : Instruction[], input : Immediate[] = [], output : Immediate[] = []) : Machine {
         return new Machine(
             MachineState.initialState(),
             program,
@@ -35,23 +44,21 @@ export class Machine {
         )
     }
 
-    *run () {
-        let machine = this.state;
-        while (machine.isRunning()) {
+    *run () : Generator<MachineLog, void, void> {
+        while (this.state.isRunning()) {
             yield this.step();
-            if (machine.pc >= MAX_LOOPS) break;
+            if (this.state.pc >= MAX_LOOPS) break;
         }
     }
 
-    step () {
-        let machine = this.state;
+    step () : MachineLog {
         // ---------------------------------------------------------------------
         // Decode the instruction
         // ---------------------------------------------------------------------
-        let instruction = this.program[machine.ip];
+        let instruction = this.program[this.state.ip] as Instruction;
         let [ st, op, data, tm, retain ] = instruction;
 
-        let temp;
+        let temp : Temporary = null;
 
         // ---------------------------------------------------------------------
         // Apply state changes
@@ -67,7 +74,7 @@ export class Machine {
                 break;
             case EQZ:
                 // conditional jump, just goto the IP if zero
-                tm = machine.checkIfZero() ? tm : 1;
+                tm = this.state.checkIfZero() ? tm : 1;
                 break;
             default:
                 // if we don't know the op, then we should halt and complain!
@@ -78,10 +85,10 @@ export class Machine {
         case COMM:
             switch (op) {
             case GET:
-                temp = machine.PUSH(this.input.shift());
+                temp = this.state.PUSH(this.input.shift() as Immediate);
                 break;
             case PUT:
-                temp = machine.getValueAtTOS();
+                temp = this.state.getValueAtTOS();
                 this.output.push(temp);
                 break;
             default:
@@ -99,36 +106,36 @@ export class Machine {
             // stack ops ...
             // ----------------------------------------------
             // adds new values, so returns new temp
-            case PUSH : temp = machine.PUSH(data); break;
-            case DUP  : temp = machine.DUP();      break;
+            case PUSH : temp = this.state.PUSH(data as Immediate); break;
+            case DUP  : temp = this.state.DUP(); break;
             // just alters the stack, no temp needed
-            case POP  : machine.POP();  break;
-            case SWAP : machine.SWAP(); break;
-            case ROT  : machine.ROT();  break;
+            case POP  : this.state.POP();  break;
+            case SWAP : this.state.SWAP(); break;
+            case ROT  : this.state.ROT();  break;
             // ----------------------------------------------
             // maths ...
             // ----------------------------------------------
-            case NEG: temp = machine.UNOP((x) => -x); break;
-            case ADD: temp = machine.BINOP((n, m) => n + m ); break;
-            case SUB: temp = machine.BINOP((n, m) => n - m ); break;
-            case MUL: temp = machine.BINOP((n, m) => n * m ); break;
-            case DIV: temp = machine.BINOP((n, m) => n / m ); break;
-            case MOD: temp = machine.BINOP((n, m) => n % m ); break;
+            case NEG: temp = this.state.UNOP((x) => -x); break;
+            case ADD: temp = this.state.BINOP((n, m) => n + m ); break;
+            case SUB: temp = this.state.BINOP((n, m) => n - m ); break;
+            case MUL: temp = this.state.BINOP((n, m) => n * m ); break;
+            case DIV: temp = this.state.BINOP((n, m) => n / m ); break;
+            case MOD: temp = this.state.BINOP((n, m) => n % m ); break;
             // ----------------------------------------------
             // comparison ...
             // ----------------------------------------------
-            case EQ: temp = machine.BINOP((n, m) => n == m ? TRUE : FALSE); break;
-            case NE: temp = machine.BINOP((n, m) => n != m ? TRUE : FALSE); break;
-            case LT: temp = machine.BINOP((n, m) => n <  m ? TRUE : FALSE); break;
-            case LE: temp = machine.BINOP((n, m) => n <= m ? TRUE : FALSE); break;
-            case GT: temp = machine.BINOP((n, m) => n >  m ? TRUE : FALSE); break;
-            case GE: temp = machine.BINOP((n, m) => n >= m ? TRUE : FALSE); break;
+            case EQ: temp = this.state.BINOP((n, m) => n == m ? TRUE : FALSE); break;
+            case NE: temp = this.state.BINOP((n, m) => n != m ? TRUE : FALSE); break;
+            case LT: temp = this.state.BINOP((n, m) => n <  m ? TRUE : FALSE); break;
+            case LE: temp = this.state.BINOP((n, m) => n <= m ? TRUE : FALSE); break;
+            case GT: temp = this.state.BINOP((n, m) => n >  m ? TRUE : FALSE); break;
+            case GE: temp = this.state.BINOP((n, m) => n >= m ? TRUE : FALSE); break;
             // ----------------------------------------------
             // logical ...
             // ----------------------------------------------
-            case NOT: temp = machine.UNOP((x) => x ? TRUE : FALSE); break;
-            case AND: temp = machine.BINOP((n, m) => n && m ? TRUE : FALSE); break;
-            case OR:  temp = machine.BINOP((n, m) => n || m ? TRUE : FALSE); break;
+            case NOT: temp = this.state.UNOP((x) => x ? TRUE : FALSE); break;
+            case AND: temp = this.state.BINOP((n, m) => n && m ? TRUE : FALSE); break;
+            case OR:  temp = this.state.BINOP((n, m) => n || m ? TRUE : FALSE); break;
             // ----------------------------------------------
             default:
                 // if we don't know the op, then we should halt and complain!
@@ -142,7 +149,7 @@ export class Machine {
             break;
         }
 
-        return [ temp, st, instruction, machine.advance(st, tm) ]
+        return [ temp, st, instruction, this.state.advance(st, tm) ] as MachineLog;
     }
 
 }

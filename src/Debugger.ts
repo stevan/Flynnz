@@ -1,34 +1,42 @@
 
-import { SCAN, COMM, JUMP, HALT, ERR, ___, TRUE, FALSE, } from './ISA.js'
+import {
+    SCAN, COMM, JUMP, HALT, ERR,
+    ___, TRUE, FALSE,
+
+    Instruction,
+
+} from './ISA'
+
+import {
+    Machine,
+    MachineLog,
+} from './machines/SISD/Machine'
 
 export const DIVIDER   = '-'.repeat(120);
 
-export const fmt = (n, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
+export const fmt = (n : any, w = 2, s = '0', atEnd = false, nullRepr = 'NULL') =>
     (atEnd
-        ? (_st, _w, _s) => _st.padEnd(_w, _s)
-        : (_st, _w, _s) => _st.padStart(_w, _s)
+        ? (_st : string, _w : number, _s : string) => _st.padEnd(_w, _s)
+        : (_st : string, _w : number, _s : string) => _st.padStart(_w, _s)
     )((n == null ? nullRepr : n.toString()), w, s)
 
-export function runPrograms (machineBuilder, programs) {
-    programs.forEach((bundle) => {
-        let [ name, program, input, output, filter ] = bundle;
+export function runPrograms (machines : [ string, Machine, boolean ][]) : void {
+    machines.forEach(([ name, machine, filter ]) => {
 
-        let machine = machineBuilder(program, input, output);
-
-        displayProgram(name, program);
+        displayProgram(name, machine.program);
         displayRuntimeHeader(name);
-        let log = [];
+        let log : MachineLog[] = [];
         for (const entry of machine.run()) {
             displayMachineState(entry);
             log.push(entry);
         }
         displayRuntimeFooter();
-        displayProgramResults(name, log, input, output, filter ?? true );
+        displayProgramResults(name, log, machine.input, machine.output, filter );
     });
 }
 
 
-export function displayProgram (name, program) {
+export function displayProgram (name : string, program : Instruction[]) : void {
     console.log(DIVIDER);
     console.log(`Loading Program := ${name}`)
     console.group(DIVIDER)
@@ -43,18 +51,18 @@ export function displayProgram (name, program) {
 }
 
 
-export function displayRuntimeHeader (name) {
+export function displayRuntimeHeader (name : string) : void {
     console.log(DIVIDER);
     console.log(`Running Program := ${name}`)
     console.group(DIVIDER);
 }
 
-export function displayRuntimeFooter() {
+export function displayRuntimeFooter() : void {
     console.groupEnd();
 }
 
-export function displayMachineState (state) {
-    let [ temp, st, instruction, machine ] = state;
+export function displayMachineState (log : MachineLog) : void {
+    let [ temp, st, instruction, machine ] = log;
     let op = instruction[1];
 
     switch (st) {
@@ -83,7 +91,7 @@ export function displayMachineState (state) {
     }
 }
 
-export function displayProgramResults (name, log, input, output, filter) {
+export function displayProgramResults (name : string, log : MachineLog[], input : any[], output : any[], filter : boolean) : void {
     console.log(DIVIDER);
     console.log(`Program Results := ${name}`)
     console.group(DIVIDER);
@@ -96,7 +104,7 @@ export function displayProgramResults (name, log, input, output, filter) {
     .forEach((row) => {
         let [ temp, st, instruction, machine ] = row;
         let [ _st, op, data, tm, retain ] = instruction;
-        if (filter && retain != TRUE) return;
+        if (filter && retain != true) return;
         console.log('|' + [ temp, machine.pc, machine.stack.at(-1), machine.stack.at(-2), st, op, machine.ip, retain ].map((v) => fmt(v, 6, ' ')).join(' | ') + ' |')
     });
     console.log('+-------+--------+--------+--------+--------+--------+--------+--------+');
