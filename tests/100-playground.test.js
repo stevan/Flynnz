@@ -1,6 +1,6 @@
 
 import * as Debugger from '../src/Debugger.js'
-import * as Machine  from '../src/machines/SISD/Machine.js'
+import { Machine } from '../src/machines/SISD/Machine.js'
 
 import {
     SCAN, COMM, JUMP, HALT, ERR,
@@ -27,7 +27,7 @@ export const countdown = [
     [ HALT,  ___,  ___,  0, FALSE,  ],
 ];
 
-Debugger.runPrograms(Machine, [
+Debugger.runPrograms(Machine.load, [
     [ 'countdown', countdown, [ 10 ], [] ],
 ]);
 

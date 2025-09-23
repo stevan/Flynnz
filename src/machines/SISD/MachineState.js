@@ -21,9 +21,18 @@ export class MachineState {
     }
 
     advance (nextState, tapeMovement) {
+        let prev = {
+            state : this.state,
+            ip    : this.ip,
+            pc    : this.pc,
+            stack : this.stack.map((p) => p[0])
+        };
+
         this.state = nextState;
         this.ip   += tapeMovement;
         this.pc   += 1;
+
+        return prev;
     }
 
     // -------------------------------------------------------------------------
@@ -39,8 +48,6 @@ export class MachineState {
 
     rhsIndex () { return this.stack[ this.stack.length - 1 ]?.at(0) }
     lhsIndex () { return this.stack[ this.stack.length - 2 ]?.at(0) }
-
-    stackValues () { return this.stack.map((p) => p[1]) }
 
     getValueAtTOS () {
         let [ idx, top ] = this.stack[ this.stack.length - 1 ];

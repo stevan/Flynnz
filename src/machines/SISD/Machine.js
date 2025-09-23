@@ -13,17 +13,42 @@ import {
 
 import { MachineState } from './MachineState.js'
 
-export function *run (program, input, output) {
+export class Machine {
+    state;
+    program;
+    input;
+    output;
 
-    let machine = MachineState.initialState();
+    constructor (state, program, input, output) {
+        this.state   = state;
+        this.program = program;
+        this.input   = input;
+        this.output  = output;
+    }
 
-    // execute until we hit the end, or an error
-    while (machine.isRunning()) {
+    static load (program, input, output) {
+        return new Machine(
+            MachineState.initialState(),
+            program,
+            input,
+            output,
+        )
+    }
 
+    *run () {
+        let machine = this.state;
+        while (machine.isRunning()) {
+            yield this.step();
+            if (machine.pc >= MAX_LOOPS) break;
+        }
+    }
+
+    step () {
+        let machine = this.state;
         // ---------------------------------------------------------------------
         // Decode the instruction
         // ---------------------------------------------------------------------
-        let instruction = program[machine.ip];
+        let instruction = this.program[machine.ip];
         let [ st, op, data, tm, retain ] = instruction;
 
         let temp;
@@ -53,11 +78,11 @@ export function *run (program, input, output) {
         case COMM:
             switch (op) {
             case GET:
-                temp = machine.PUSH(input.shift());
+                temp = machine.PUSH(this.input.shift());
                 break;
             case PUT:
                 temp = machine.getValueAtTOS();
-                output.push(temp);
+                this.output.push(temp);
                 break;
             default:
                 // if we don't know the op, then we should halt and complain!
@@ -117,19 +142,7 @@ export function *run (program, input, output) {
             break;
         }
 
-        // ---------------------------------------------------------------------
-        // Write to the output
-        // ---------------------------------------------------------------------
-        yield [ temp, st, instruction, machine ]
-
-        // ---------------------------------------------------------------------
-        // Update system loop state
-        // ---------------------------------------------------------------------
-        machine.advance(st, tm);
-
-        // go around the loop again, but
-        // check the max loops for sanity
-        if (machine.pc >= MAX_LOOPS) break;
+        return [ temp, st, instruction, machine.advance(st, tm) ]
     }
-}
 
+}

@@ -6,8 +6,20 @@
 ## Misc. Cleanup
 <!----------------------------------------------------------------------------->
 
+- improve the COMM state
+    - don't just use arrays for input/output, do better!
+
+- make datatypes abstract/polymophic
+    - ADD, SUB, etc. should work for scalar, vectors and matrices
+    - similarly for other operations when possible
+    - the actual ADD, SUB, etc. functions can be "microcode" 
+        - if pure, they should be easily resused
+            - on simple scalars
+            - mapped across two lists of values
+            - elementwise over two matrices
+            - whatever 
+
 - clean up the output log format
-    - a lot of it can be inferred now from the machine state
     - we can pass the value, the old state and new state
         - this means making the state immutable
             - which is a good thing
@@ -16,34 +28,6 @@
     - specifically the `op` is not being used at all
         - come up with a better approach overall
         - but probably fix this in the output log format cleanup
-
-- make the binop and unop methods in the stack do more
-    - pass in a bin or un function and it can lift it
-    - this should make it easier to reuse stuff across taxonomies
-    - the actual ADD, SUB, etc. functions can be "microcode" 
-        - if pure, they should be easily resused
-            - on simple scalars
-            - mapped across two lists of values
-            - elementwise over two matrices
-            - whatever 
-
-- make datatypes abstract/polymophic
-    - ADD, SUB, etc. should work for scalar, vectors and matrices
-    - similarly for other operations when possible
-
-<!----------------------------------------------------------------------------->
-## I/O 
-<!----------------------------------------------------------------------------->
-
-- make a new COMM state
-    - for when communicating with I/O and other things
-    - add PUT, GET operations for I/O
-    - this COMM state can be async as well
-    
-- PUT
-    - this will mark the output log to retain things 
-- GET 
-    - this will grab the next item from the input queue
 
 <!----------------------------------------------------------------------------->
 ## Machine Wrappers
