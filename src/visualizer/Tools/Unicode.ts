@@ -1,14 +1,31 @@
 
 
 export namespace Emojis {
-    export const SadFace     = '☹️'
-    export const HappyFace   = '☺️'
-    export const Ok          = '🆗'
-    export const Rainbow     = '🌈'
-    export const Lightning   = '⚡️'
-    export const Rocket      = '🚀'
-    export const BrokenHeart = '💔'
-    export const PileOfPoop  = '💩'
+    export const SadFace      = '☹️'
+    export const HappyFace    = '☺️'
+    export const Ok           = '🆗'
+    export const Rainbow      = '🌈'
+    export const Lightning    = '⚡️'
+    export const Rocket       = '🚀'
+    export const BrokenHeart  = '💔'
+    export const PileOfPoop   = '💩'
+    export const CheckMark    = '✅'
+    export const RaisedHand   = '✋'
+    export const RaisedFist   = '✊'
+    export const NoEntry      = '⛔'
+    export const Disk         = '💾'
+    export const MailboxEmpty = '📪'
+    export const MailboxFull  = '📫'
+    export const Phone        = '📞'
+    export const ChainLink    = '🔗'
+    export const ToiletPaper  = '🧻'
+    export const Pill         = '💊'
+    export const Package      = '📦'
+    export const LockedLock   = '🔒'
+    export const Sparkle      = '✨'
+
+    export const TrafficLightVertical   = '🚦'
+    export const TrafficLightHorizontal = '🚥'
 }
 
 export namespace Greyscale {
@@ -16,6 +33,19 @@ export namespace Greyscale {
     export const LightGrey = '░'
     export const DarkGrey  = '▓'
     export const White     = '█'
+}
+
+export namespace Brackets {
+    export const HeavyAngleRight = '❯'
+    export const HeavyAngleLeft  = '❮'
+    export const LightAngleLeft  = '⟨'
+    export const LightAngleRight = '⟩'
+}
+
+export Bars {
+    export const LightVertical  = '❘'
+    export const MediumVertical = '❙'
+    export const HeavyVertical  = '❚'
 }
 
 export namespace Blocks {
@@ -58,7 +88,7 @@ export namespace Shapes {
 }
 
 
-export namespace Arrows {
+export namespace Triangles {
     export const UpSolid    = '▲'
     export const UpEmpty    = '△'
     export const LeftSolid  = '▶'

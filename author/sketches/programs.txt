@@ -1,4 +1,37 @@
 
+:countdown ( n ──▶ n - 1 )
+    │ 000 COMM GET
+    │ 001 COMM PUT
+    ├───◯
+    │ 002 SCAN DUP
+    │ 003 SCAN PUSH  1
+    │ 004 SCAN SUB
+    │ 005 COMM PUT
+    │ 006 SCAN DUP
+    │ 007 SCAN PUSH  1
+    │ 008 SCAN EQ
+    │ 009 JUMP EQZ  ❮002❯
+    ╰───● HALT
+
+
+
+
+     ╭───● 🚀
+ ╭───▶ 000 ⚡️ COMM GET
+ │   │ 001 ⚡️ COMM PUT
+ │ ╭─▶ 002 🚥 SCAN DUP
+ │ │ │ 003 🚥 SCAN PUSH  1
+ │ │ │ 004 🚥 SCAN SUB
+ │ │ │ 005 ⚡️ COMM PUT
+ │ │ │ 006 🚥 SCAN DUP
+ │ │ │ 007 🚥 SCAN PUSH  1
+ │ │ │ 008 🚥 SCAN EQ
+ │ ╰─┤ 009 🌈 JUMP EQZ  ❮002❯
+ ╰───┤ 010 🌈 JUMP EQZ  ❮000❯
+     ╰───● ✋ HALT
+
+
+
 
 00 ENTER
 ========================================================================
