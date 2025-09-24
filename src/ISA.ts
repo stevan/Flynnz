@@ -101,8 +101,21 @@ export type Instruction =
 
 // -----------------------------------------------------------------------------
 
+export class Bytecode {
+    public instructions : Instruction[];
+    public jumpTargets  : number[] = [];
 
+    constructor(...instructions : Instruction[]) {
+        this.instructions = instructions;
 
+        this.instructions.forEach((instr, idx) => {
+            let [ st, op, data, tm, retain ] = instr;
+            if (st == JUMP && op == EQZ) {
+                this.jumpTargets.push((idx + 1) + tm);
+            }
+        })
+    }
+}
 
 
 
