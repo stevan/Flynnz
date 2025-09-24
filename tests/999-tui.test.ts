@@ -1,7 +1,7 @@
 
 import { Display } from '../src/visualizer/Tools/Display';
 
-import { BytecodeView } from '../src/visualizer/Tools/Widgets/BytecodeView';
+import { BytecodeView } from '../src/visualizer/BytecodeView';
 
 import { Instruction, Bytecode } from '../src/ISA'
 

@@ -1,11 +1,11 @@
 
-import { View } from '../Display';
+import { View } from './Tools/Display';
 
 import {
     SCAN, COMM, JUMP, HALT, ERR,
     Instruction,
     Bytecode
-} from '../../../ISA'
+} from '../ISA'
 
 export class BytecodeView implements View {
     public dimensions : [ number, number ] = [ 0, 50 ];
