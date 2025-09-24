@@ -1,6 +1,6 @@
 
-import { View } from './Display';
-import * as Unicode from './Unicode'
+import { View } from '../Display';
+import * as Unicode from '../Unicode'
 
 export type TableHeader = {
     label : string,
@@ -18,16 +18,12 @@ export type TableConfig = {
     }
 }
 
-export class Table implements View {
-    public position   : [ number, number ];
+export class BasicTable implements View {
     public dimensions : [ number, number ];
     public config     : TableConfig;
 
-    constructor( position : [ number, number ], config : TableConfig) {
-        //console.log(config.data);
-
+    constructor( config : TableConfig) {
         this.config     = config;
-        this.position   = position;
 
         let showOuter = config.borders.showOuter;
         let showInner = config.borders.showInner;
@@ -57,22 +53,22 @@ export class Table implements View {
         ];
 
         this.config.headers.forEach((header, headerIdx) => {
-            rows[0].push(Unicode.Boxes.Horizontal.repeat(header.width));
-            rows[1].push(header.label.padEnd(header.width));
+            rows[0]?.push(Unicode.Boxes.Horizontal.repeat(header.width));
+            rows[1]?.push(header.label.padEnd(header.width));
 
             if ((headerIdx + 1) == this.config.headers.length) {
-                rows[0].push(Unicode.Boxes.Curved.TopRight);
-                rows[1].push(Unicode.Boxes.Vertical);
+                rows[0]?.push(Unicode.Boxes.Curved.TopRight);
+                rows[1]?.push(Unicode.Boxes.Vertical);
             } else {
-                rows[0].push(Unicode.Boxes.TopDivider);
-                rows[1].push(Unicode.Boxes.Vertical);
+                rows[0]?.push(Unicode.Boxes.TopDivider);
+                rows[1]?.push(Unicode.Boxes.Vertical);
             }
         });
 
         if (!showOuter) {
             rows.shift();
-            rows[0].shift();
-            rows[0].pop();
+            rows[0]?.shift();
+            rows[0]?.pop();
         }
 
         return rows.map((line) => line.join(''));
@@ -91,23 +87,23 @@ export class Table implements View {
             this.config.headers.forEach((header, headerIdx) => {
                 let cellData = rowData[headerIdx];
 
-                rows[0].push(Unicode.Boxes.Horizontal.repeat(header.width));
-                rows[1].push(cellData.toString().padEnd(header.width));
+                rows[0]?.push(Unicode.Boxes.Horizontal.repeat(header.width));
+                rows[1]?.push(cellData.toString().padEnd(header.width));
 
                 if ((headerIdx + 1) == this.config.headers.length) {
-                    rows[0].push(Unicode.Boxes.RightDivider);
-                    rows[1].push(Unicode.Boxes.Vertical);
+                    rows[0]?.push(Unicode.Boxes.RightDivider);
+                    rows[1]?.push(Unicode.Boxes.Vertical);
                 } else {
-                    rows[0].push(Unicode.Boxes.MiddleDivider);
-                    rows[1].push(Unicode.Boxes.Vertical);
+                    rows[0]?.push(Unicode.Boxes.MiddleDivider);
+                    rows[1]?.push(Unicode.Boxes.Vertical);
                 }
             });
 
             if (!showOuter) {
-                rows[0].shift();
-                rows[0].pop();
-                rows[1].shift();
-                rows[1].pop();
+                rows[0]?.shift();
+                rows[0]?.pop();
+                rows[1]?.shift();
+                rows[1]?.pop();
             }
 
             if (!showInner && rowIdx > 0) {

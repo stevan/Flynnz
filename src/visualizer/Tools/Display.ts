@@ -10,28 +10,32 @@ export const ScreenExtent        = [ ...MaxScreenDimensions ];
 
 export interface View {
     dimensions : [ number, number ];
-    position   : [ number, number ];
     scanlines  : string[];
 }
 
 export class Display {
-    public tty   : tty.WriteStream;
-    public views : View[];
+    public tty : tty.WriteStream;
 
-    constructor(views : View[] = []) {
-        this.tty   = process.stdout;
-        this.views = views;
+    constructor() {
+        this.tty = process.stdout;
     }
 
-    draw () : void {
-        this.views.forEach((view, viewIdx) => {
-            let [ h, w ] = view.dimensions;
-            let [ x, y ] = view.position;
+    draw (view : View, at : [ number, number ]) : void {
+        let [ x, y ] = at;
+        let [ h, w ] = view.dimensions;
 
-            this.tty.write( ANSI.formatCursorMove( x + 1, y + 1 ) );
-            view.scanlines.map((line) => {
-                this.tty.write( line + ANSI.formatCarrigeReturn(w) );
-            })
+        this.tty.write( ANSI.formatCursorMove( x + 1, y + 1 ) );
+        view.scanlines.map((line) => {
+            this.tty.write( line + ANSI.formatCarrigeReturn(w) );
+        });
+        this.tty.write('\r');
+    }
+
+    inline (view : View, indent : number = 0) : void {
+        let indentStr = indent == 0 ? '' : ' '.repeat(indent);
+        let [ h, w ] = view.dimensions;
+        view.scanlines.map((line) => {
+            this.tty.write( indentStr + line + ANSI.formatCarrigeReturn(w + indent) );
         });
     }
 

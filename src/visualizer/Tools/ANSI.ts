@@ -2,14 +2,14 @@
 
 export const ESC = '\x1b[';
 
-export const HOME_CURSOR  = ESC + '[H';
-export const CLEAR_SCREEN = ESC + '[2J'
+export const HOME_CURSOR  = ESC + 'H';
+export const CLEAR_SCREEN = ESC + '2J'
 
-export const HIDE_CURSOR        = ESC + "[?25l";
-export const SHOW_CURSOR        = ESC + "[?25h";
+export const HIDE_CURSOR        = ESC + '?25l';
+export const SHOW_CURSOR        = ESC + '?25h';
 
-export const ENABLE_ALT_BUFFER  = ESC + "[?1049h";
-export const DISABLE_ALT_BUFFER = ESC + "[?1049l";
+export const ENABLE_ALT_BUFFER  = ESC + '?1049h';
+export const DISABLE_ALT_BUFFER = ESC + '?1049l';
 
 const RESET  = ESC + '0m';
 const BOLD   = ESC + '1m';
@@ -19,26 +19,26 @@ const INVERT = ESC + '7m';
 const STRIKE = ESC + '9m';
 
 export const formatCarrigeReturn = (lineWidth : number) : string => {
-    return `${ESC}[B${ESC}[${lineWidth}D`
+    return `${ESC}B${ESC}${lineWidth}D`
 }
 
 export const formatCursorMove = (row : number, col : number) : string => {
-    return `${ESC}[${row};${col}H`
+    return `${ESC}${row};${col}H`
 }
 
 export namespace RGB {
     export const formatBgColor = (r : number, g : number, b : number) : string => {
-        return `${ESC}[48;2;${r};${g};${b};m`
+        return `${ESC}48;2;${r};${g};${b};m`
     }
 
     export const formatFgColor = (r : number, g : number, b : number) : string => {
-        return `${ESC}[38;2;${r};${g};${b};m`
+        return `${ESC}38;2;${r};${g};${b};m`
     }
 
     export const formatColor = (fgColor : number[], bgColor: number[]) : string =>  {
         let [ fr, fg, fb ] = fgColor;
         let [ br, bg, bb ] = bgColor;
-        return `${ESC}[38;2;${fr};${fg};${fb};48;2;${br};${bg};${bb};m`
+        return `${ESC}38;2;${fr};${fg};${fb};48;2;${br};${bg};${bb};m`
     }
 }
 

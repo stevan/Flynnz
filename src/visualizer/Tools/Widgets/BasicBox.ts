@@ -15,18 +15,17 @@ export type BoxConfig = {
 }
 
 export class BasicBox implements View {
-    public position   : [ number, number ];
     public dimensions : [ number, number ];
     public config     : BoxConfig;
 
-    constructor( position : [ number, number ], config : BoxConfig) {
+    constructor(config : BoxConfig) {
         this.config     = config;
-        this.position   = position;
         this.dimensions = [ config.height, config.width ]
     }
 
     get scanlines () : string[] {
         let [ h, w ] = this.dimensions.map((d) => d - 2); // subtrack 2 for the borders
+        if (h === undefined || w === undefined) throw new Error('WTF!');
         return [
             [
                 Unicode.Boxes.Curved.TopLeft,
