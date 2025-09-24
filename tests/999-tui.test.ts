@@ -2,6 +2,9 @@
 import { Display } from '../src/visualizer/Tools/Display';
 
 import { BytecodeView } from '../src/visualizer/BytecodeView';
+import { MachineStateView } from '../src/visualizer/MachineStateView';
+
+import { MachineState } from '../src/machines/SISD/MachineState'
 
 import { Instruction, Bytecode } from '../src/ISA'
 
@@ -16,6 +19,9 @@ let display = new Display();
     new BytecodeView('rotTest',     new Bytecode(...rotTest)),
     new BytecodeView('swapTest',    new Bytecode(...swapTest)),
     new BytecodeView('dupTest',     new Bytecode(...dupTest)),
+
+    new MachineStateView(MachineState.initialState())
+
 ].forEach(
     (table) => display.inline(table)
 );
