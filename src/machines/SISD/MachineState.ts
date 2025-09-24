@@ -30,11 +30,11 @@ export class MachineState {
         public stack : MachineStack,
     ) {}
 
-    // -------------------------------------------------------------------------
-
     static initialState () : MachineState {
         return new MachineState(SCAN, 0, 0, [])
     }
+
+    // -------------------------------------------------------------------------
 
     advance (nextState : OperationalState, tapeMovement : TapeMovement) : MachineStateSnapshot {
         let prev : MachineStateSnapshot = {

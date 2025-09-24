@@ -17,10 +17,7 @@ import {
 
 } from '../../ISA'
 
-import {
-    InputChannel,
-    OutputChannel,
-} from '../IO/Channels'
+import { IOChannel } from '../IO/Channels'
 
 import {
     MachineState,
@@ -36,29 +33,33 @@ export class Machine {
     constructor(
         public state    : MachineState,
         public program  : Instruction[],
-        public input    : InputChannel,
-        public output   : OutputChannel,
+        public input    : IOChannel,
+        public output   : IOChannel,
     ) {}
 
-    static load (program : Instruction[], input? : InputChannel | number[], output? : OutputChannel) : Machine {
+    static load (program : Instruction[], input? : IOChannel | number[], output? : IOChannel) : Machine {
         return new Machine(
             MachineState.initialState(),
             program,
             (input == undefined
-                ? new InputChannel()
+                ? new IOChannel()
                 : Array.isArray(input)
-                    ? new InputChannel(...input)
+                    ? new IOChannel(...input)
                     : input),
-            (output ?? new OutputChannel()),
+            (output ?? new IOChannel()),
         )
     }
 
     *run () : Generator<MachineLog, void, void> {
         while (this.state.isRunning()) {
             yield this.step();
-            if (this.state.pc >= MAX_LOOPS) break;
+            if (this.state.pc >= MAX_LOOPS) break; // FIXME: do this better
         }
     }
+
+    isRunning () : boolean { return this.state.isRunning() }
+    isHalted  () : boolean { return this.state.isHalted()  }
+    hasError  () : boolean { return this.state.hasError()  }
 
     step () : MachineLog {
         // ---------------------------------------------------------------------
@@ -94,11 +95,11 @@ export class Machine {
         case COMM:
             switch (op) {
             case GET:
-                temp = this.state.PUSH(this.input.readValue() as Immediate);
+                temp = this.state.PUSH(this.input.acceptValue() as Immediate);
                 break;
             case PUT:
                 temp = this.state.getValueAtTOS();
-                this.output.writeValue(temp);
+                this.output.appendValue(temp);
                 break;
             default:
                 // if we don't know the op, then we should halt and complain!

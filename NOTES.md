@@ -3,31 +3,25 @@
 <!----------------------------------------------------------------------------->
 
 <!----------------------------------------------------------------------------->
-## Misc. Cleanup
+## Async & I/O
 <!----------------------------------------------------------------------------->
 
-- improve the COMM state
-    - don't just use arrays for input/output, do better!
+- add a WAIT state for the machine (WAIT, IO, ... etc)
+    - it will not progress until woken up
+        - NOTE: generator will go into a loop, so stop using it
+    - every loop on a WAIT machine
+        - checks to see if the channel has anything
+            - if yes, it wakes the machine up and puts it the queue
+            
+- different WAIT stuff
+    - [ WAIT, IO ]
+        - for waiting on GET
+    - [ WAIT, SLEEP, $timeout ]
+        - for implementing timeouts
 
-- make datatypes abstract/polymophic
-    - ADD, SUB, etc. should work for scalar, vectors and matrices
-    - similarly for other operations when possible
-    - the actual ADD, SUB, etc. functions can be "microcode" 
-        - if pure, they should be easily resused
-            - on simple scalars
-            - mapped across two lists of values
-            - elementwise over two matrices
-            - whatever 
-
-- clean up the output log format
-    - we can pass the value, the old state and new state
-        - this means making the state immutable
-            - which is a good thing
-
-- the various ERR states are not handled correctly
-    - specifically the `op` is not being used at all
-        - come up with a better approach overall
-        - but probably fix this in the output log format cleanup
+- GET then can be async
+    - if the channel is not exhausted
+        - put machine into WAIT state
 
 <!----------------------------------------------------------------------------->
 ## Machine Wrappers
@@ -60,5 +54,30 @@
     - https://puzzles.modular.com/introduction.html
     - specifically the Warp/Block/Etc. level ideas
         - which can be mapped into wrappers
+
+
+<!----------------------------------------------------------------------------->
+## Misc. Cleanup
+<!----------------------------------------------------------------------------->
+
+- make datatypes abstract/polymophic
+    - ADD, SUB, etc. should work for scalar, vectors and matrices
+    - similarly for other operations when possible
+    - the actual ADD, SUB, etc. functions can be "microcode" 
+        - if pure, they should be easily resused
+            - on simple scalars
+            - mapped across two lists of values
+            - elementwise over two matrices
+            - whatever 
+
+- clean up the output log format
+    - we can pass the value, the old state and new state
+        - this means making the state immutable
+            - which is a good thing
+
+- the various ERR states are not handled correctly
+    - specifically the `op` is not being used at all
+        - come up with a better approach overall
+        - but probably fix this in the output log format cleanup
         
 <!----------------------------------------------------------------------------->

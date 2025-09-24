@@ -1,23 +1,16 @@
 
+import { Immediate } from '../../ISA'
 
-export class InputChannel {
+export class IOChannel {
+    public buffer : Immediate[]
     public index  : number;
-    public source : number[]
 
-    constructor(...source : number[]) {
-        this.source = source;
+    constructor(...buffer : Immediate[]) {
+        this.buffer = buffer;
         this.index  = 0;
     }
 
-    readValue () : number {
-        return this.source[ this.index++ ] as number;
-    }
-}
-
-export class OutputChannel {
-    public sink : number[] = [];
-
-    writeValue (value : number) : void {
-        this.sink.push(value)
-    }
+    isExhausted () : boolean { return this.index >= this.buffer.length }
+    appendValue (v : Immediate) : void { this.buffer.push(v) }
+    acceptValue () : Immediate { return this.buffer[this.index++] as Immediate }
 }
