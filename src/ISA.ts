@@ -111,7 +111,7 @@ export class Bytecode {
         this.instructions.forEach((instr, idx) => {
             let [ st, op, data, tm, retain ] = instr;
             if (st == JUMP && op == EQZ) {
-                this.jumpTargets.push((idx + 1) + tm);
+                this.jumpTargets.push((idx + tm) - 1);
             }
         })
     }

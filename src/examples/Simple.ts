@@ -9,12 +9,12 @@ import {
     EQZ, ANY,
     ___, TRUE, FALSE,
 
-    Instruction,
+    Bytecode,
 } from '../ISA'
 
 
 // result should be 2 -> 256 by powers of 2
-export const powersOfTwo : Instruction[] = [
+export const powersOfTwo = new Bytecode(
     [ SCAN, PUSH,   2,  1, true  ],
     [ SCAN, DUP,  ___,  1, false ],
     [ SCAN, ADD,  ___,  1, false ],
@@ -23,11 +23,11 @@ export const powersOfTwo : Instruction[] = [
     [ SCAN, EQ,   ___,  1, false ],
     [ JUMP, EQZ,  ___, -5, false ],
     [ HALT, ___,  ___,  0, false ],
-];
+);
 
 
 // result should be 10 -> 1 range
-export const countdown : Instruction[] = [
+export const countdown = new Bytecode(
     [ SCAN,  PUSH,  10,  1, true   ],
     [ SCAN,  DUP,  ___,  1, false  ],
     [ SCAN,  PUSH,   1,  1, false  ],
@@ -37,4 +37,4 @@ export const countdown : Instruction[] = [
     [ SCAN,  EQ,   ___,  1, false  ],
     [ JUMP,  EQZ,  ___, -6, false  ],
     [ HALT,  ___,  ___,  0, false  ],
-];
+);

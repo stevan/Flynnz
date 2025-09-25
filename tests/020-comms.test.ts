@@ -1,5 +1,8 @@
 
-import * as Debugger from '../src/Debugger'
+import { Display } from '../src/visualizer/Tools/Display';
+import { BytecodeView } from '../src/visualizer/BytecodeView';
+import { MachineSnapshotView } from '../src/visualizer/MachineSnapshotView';
+
 import { Machine } from '../src/machines/SISD/Machine'
 
 import {
@@ -12,11 +15,10 @@ import {
     EQZ, ANY,
     ___, TRUE, FALSE,
 
-    Instruction,
-
+    Instruction, Bytecode
 } from '../src/ISA'
 
-export const countdown : Instruction[] = [
+let program = new Bytecode(
     [ COMM,  GET,  ___,  1, true  ],
     [ COMM,  PUT,  ___,  1, false ],
     [ SCAN,  DUP,  ___,  1, false ],
@@ -28,11 +30,14 @@ export const countdown : Instruction[] = [
     [ SCAN,  EQ,   ___,  1, false ],
     [ JUMP,  EQZ,  ___, -6, false ],
     [ HALT,  ___,  ___,  0, false ],
-];
+ );
 
-Debugger.runPrograms([
-    [ 'countdown', Machine.load(countdown, [ 10 ]), true ],
-]);
+let display = new Display();
+let bcView = new BytecodeView('countdown', program);
+display.inline(bcView);
 
-
-
+let machine = Machine.load(program.instructions, [ 10 ])
+for (const entry of machine.run()) {
+    display.inline(new MachineSnapshotView(entry))
+}
+console.log(machine.output.buffer);

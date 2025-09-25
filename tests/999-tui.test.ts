@@ -19,9 +19,6 @@ let display = new Display();
     new BytecodeView('rotTest',     new Bytecode(...rotTest)),
     new BytecodeView('swapTest',    new Bytecode(...swapTest)),
     new BytecodeView('dupTest',     new Bytecode(...dupTest)),
-
-    new MachineStateView(MachineState.initialState())
-
 ].forEach(
     (table) => display.inline(table)
 );

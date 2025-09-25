@@ -35,7 +35,7 @@ export class Display {
         let indentStr = indent == 0 ? '' : ' '.repeat(indent);
         let [ h, w ] = view.dimensions;
         view.scanlines.map((line) => {
-            this.tty.write( indentStr + line + ANSI.formatCarrigeReturn(w + indent) );
+            this.tty.write( indentStr + line + '\n' );
         });
     }
 
