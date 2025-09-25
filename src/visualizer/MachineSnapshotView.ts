@@ -38,7 +38,7 @@ export class MachineSnapshotView implements View {
             fmtST(this.snapshot.state),
             fmtIP(this.snapshot.ip),
             (op ?? 'HALT').padEnd(6, ' '),
-            `(${(this.snapshot.temp ?? 'null').toString().padStart(6, ' ')})`,
+            `(${(this.snapshot.temp ?? '~').toString().padStart(6, ' ')})`,
             fmtStack(this.snapshot.stack),
         ];
         return [ line.join(' ') ];

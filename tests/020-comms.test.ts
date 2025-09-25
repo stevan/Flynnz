@@ -40,3 +40,5 @@ for (const entry of machine.run()) {
     display.inline(new MachineSnapshotView(entry))
 }
 console.log(machine.output.buffer);
+
+console.log(program);

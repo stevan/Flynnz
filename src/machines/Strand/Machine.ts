@@ -235,6 +235,7 @@ export class Machine {
             break;
         }
 
+        // construct the snapshot ...
         let snapshot : MachineSnapshot = {
             temp  : temp,
             instr : instruction,
@@ -244,10 +245,12 @@ export class Machine {
             stack : this.stack.map((p) => p[0])
         };
 
+        // update the state ...
         this.state = st;
         this.ip   += tm;
         this.pc   += 1;
 
+        // return the snapshot
         return snapshot;
     }
 

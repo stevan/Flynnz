@@ -50,7 +50,9 @@ export class Bytecode {
         this.instructions.forEach((instr, idx) => {
             let [ st, op, data, tm, retain ] = instr;
             if (st == 'JUMP' && op == 'EQZ') {
-                this.jumpTargets.push((idx + tm) - 1);
+                let moveFrom = idx;
+                console.log(instr, idx, moveFrom, tm);
+                this.jumpTargets.push(moveFrom + tm);
             }
         })
     }
