@@ -1,4 +1,5 @@
 
+import { Bytecode } from '../machines/Strand/Bytecode'
 import {
     SCAN, COMM, JUMP, HALT, ERR,
     PUSH, DUP, POP, SWAP, ROT,
@@ -8,10 +9,7 @@ import {
     GET, PUT,
     EQZ, ANY,
     ___, TRUE, FALSE,
-
-    Bytecode,
-} from '../ISA'
-
+} from '../machines/Tools/Assembly'
 
 export const popTest = new Bytecode( // result should be 8
     [ SCAN, PUSH,   5,  1, false ],

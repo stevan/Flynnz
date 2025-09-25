@@ -1,5 +1,5 @@
 
-import { Immediate } from '../../ISA'
+import { Immediate } from '../Bytecode'
 
 export class IOChannel {
     public buffer : Immediate[]

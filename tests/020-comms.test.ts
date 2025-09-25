@@ -3,7 +3,8 @@ import { Display } from '../src/visualizer/Tools/Display';
 import { BytecodeView } from '../src/visualizer/BytecodeView';
 import { MachineSnapshotView } from '../src/visualizer/MachineSnapshotView';
 
-import { Machine } from '../src/machines/SISD/Machine'
+import { Machine } from '../src/machines/Strand/Machine'
+import { Bytecode } from '../src/machines/Strand/Bytecode'
 
 import {
     SCAN, COMM, JUMP, HALT, ERR,
@@ -14,9 +15,7 @@ import {
     GET, PUT,
     EQZ, ANY,
     ___, TRUE, FALSE,
-
-    Instruction, Bytecode
-} from '../src/ISA'
+} from '../src/machines/Tools/Assembly'
 
 let program = new Bytecode(
     [ COMM,  GET,  ___,  1, true  ],

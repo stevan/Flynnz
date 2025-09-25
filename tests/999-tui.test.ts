@@ -1,24 +1,20 @@
 
 import { Display } from '../src/visualizer/Tools/Display';
-
 import { BytecodeView } from '../src/visualizer/BytecodeView';
-import { MachineStateView } from '../src/visualizer/MachineStateView';
 
-import { MachineState } from '../src/machines/SISD/MachineState'
-
-import { Instruction, Bytecode } from '../src/ISA'
+import { Bytecode } from '../src/machines/Strand/Bytecode'
 
 import { powersOfTwo, countdown } from '../src/examples/Simple'
 import { popTest, rotTest, swapTest, dupTest } from '../src/examples/OperationTests'
 
 let display = new Display();
 [
-    new BytecodeView('powersOfTwo', new Bytecode(...powersOfTwo)),
-    new BytecodeView('countdown',   new Bytecode(...countdown)),
-    new BytecodeView('popTest',     new Bytecode(...popTest)),
-    new BytecodeView('rotTest',     new Bytecode(...rotTest)),
-    new BytecodeView('swapTest',    new Bytecode(...swapTest)),
-    new BytecodeView('dupTest',     new Bytecode(...dupTest)),
+    new BytecodeView('powersOfTwo', powersOfTwo),
+    new BytecodeView('countdown',   countdown),
+    new BytecodeView('popTest',     popTest),
+    new BytecodeView('rotTest',     rotTest),
+    new BytecodeView('swapTest',    swapTest),
+    new BytecodeView('dupTest',     dupTest),
 ].forEach(
     (table) => display.inline(table)
 );

@@ -3,8 +3,8 @@ import { Display } from '../src/visualizer/Tools/Display';
 import { BytecodeView } from '../src/visualizer/BytecodeView';
 import { MachineSnapshotView } from '../src/visualizer/MachineSnapshotView';
 
-import { Machine } from '../src/machines/SISD/Machine'
-import { Bytecode } from '../src/ISA'
+import { Machine } from '../src/machines/Strand/Machine'
+import { Bytecode } from '../src/machines/Strand/Bytecode'
 
 import { popTest, rotTest, swapTest, dupTest } from '../src/examples/OperationTests'
 

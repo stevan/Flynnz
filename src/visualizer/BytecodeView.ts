@@ -1,11 +1,7 @@
 
 import { View } from './Tools/Display';
 
-import {
-    SCAN, COMM, JUMP, HALT, ERR,
-    Instruction,
-    Bytecode
-} from '../ISA'
+import { Instruction, Bytecode } from '../machines/Strand/Bytecode'
 
 export class BytecodeView implements View {
     public dimensions : [ number, number ] = [ 0, 50 ];
@@ -22,10 +18,10 @@ export class BytecodeView implements View {
             `:${this.name}`,
             ...this.program.instructions.map((instruction, idx) => {
                 let [ st, op, data, tm, retain ] = instruction;
-                if (st == HALT) {
+                if (st == 'HALT') {
                     return `    ╰───● HALT`;
                 }
-                else if (st == JUMP) {
+                else if (st == 'JUMP') {
                     return `    │ ${idx.toString().padStart(3, '0')} ${st} ${op?.padEnd(5, ' ')} ${tm == null ? '' : (`❮${(idx + tm).toString().padStart(3, '0')}❯`).padEnd(10, ' ')}`;
                 }
                 else if (this.program.jumpTargets.length > 0 && this.program.jumpTargets.indexOf(idx - 1) != -1) {

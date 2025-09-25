@@ -1,23 +1,17 @@
 
-import { MAX_LOOPS } from '../../Constants'
 import {
-    SCAN, COMM, JUMP, HALT, ERR,
-    PUSH, DUP, POP, SWAP, ROT,
-    NEG, ADD, SUB, MUL, DIV, MOD,
-    EQ, NE, LT, LE, GT, GE,
-    NOT, AND, OR,
-    GET, PUT,
-    EQZ, ANY,
-    TRUE, FALSE,
-
     Instruction,
     OperationalState,
     TapeMovement,
     Immediate,
+} from './Bytecode';
 
-} from '../../ISA'
+import { IOChannel } from './IO/Channels'
 
-import { IOChannel } from '../IO/Channels'
+const MAX_LOOPS = 256;
+
+const TRUE  = 1;
+const FALSE = 0;
 
 export type MachineSnapshot  = {
     temp  : Temporary,
@@ -44,7 +38,7 @@ export class Machine {
         public input    : IOChannel,
         public output   : IOChannel,
     ) {
-        this.state = SCAN;
+        this.state = 'SCAN';
         this.pc    = 0;
         this.ip    = 0;
         this.stack = [];
@@ -64,9 +58,9 @@ export class Machine {
 
     // -------------------------------------------------------------------------
 
-    isRunning () : boolean { return this.state != HALT && this.state != ERR }
-    isHalted  () : boolean { return this.state == HALT }
-    hasError  () : boolean { return this.state == ERR  }
+    isRunning () : boolean { return this.state != 'HALT' && this.state != 'ERR' }
+    isHalted  () : boolean { return this.state == 'HALT' }
+    hasError  () : boolean { return this.state == 'ERR'  }
 
     // -------------------------------------------------------------------------
 
@@ -156,40 +150,40 @@ export class Machine {
         // Apply state changes
         // ---------------------------------------------------------------------
         switch (st) {
-        case HALT:
+        case 'HALT':
             // the next loop will halt the system
             break;
-        case JUMP:
+        case 'JUMP':
             switch (op) {
-            case ANY:
+            case 'ANY':
                 // unconditional jump, just goto the IP based on TM
                 break;
-            case EQZ:
+            case 'EQZ':
                 // conditional jump, just goto the IP if zero
                 tm = this.checkIfZero() ? tm : 1;
                 break;
             default:
                 // if we don't know the op, then we should halt and complain!
-                st = ERR;
+                st = 'ERR';
                 break;
             }
             break;
-        case COMM:
+        case 'COMM':
             switch (op) {
-            case GET:
+            case 'GET':
                 temp = this.PUSH(this.input.acceptValue() as Immediate);
                 break;
-            case PUT:
+            case 'PUT':
                 temp = this.getValueAtTOS();
                 this.output.appendValue(temp);
                 break;
             default:
                 // if we don't know the op, then we should halt and complain!
-                st = ERR;
+                st = 'ERR';
                 break;
             }
             break;
-        case SCAN:
+        case 'SCAN':
             // -----------------------------------------------------------------
             // Perform the operation
             // -----------------------------------------------------------------
@@ -198,46 +192,46 @@ export class Machine {
             // stack ops ...
             // ----------------------------------------------
             // adds new values, so returns new temp
-            case PUSH : temp = this.PUSH(data as Immediate); break;
-            case DUP  : temp = this.DUP(); break;
+            case 'PUSH' : temp = this.PUSH(data as Immediate); break;
+            case 'DUP'  : temp = this.DUP(); break;
             // just alters the stack, no temp needed
-            case POP  : this.POP();  break;
-            case SWAP : this.SWAP(); break;
-            case ROT  : this.ROT();  break;
+            case 'POP'  : this.POP();  break;
+            case 'SWAP' : this.SWAP(); break;
+            case 'ROT'  : this.ROT();  break;
             // ----------------------------------------------
             // maths ...
             // ----------------------------------------------
-            case NEG: temp = this.UNOP((x) => -x); break;
-            case ADD: temp = this.BINOP((n, m) => n + m ); break;
-            case SUB: temp = this.BINOP((n, m) => n - m ); break;
-            case MUL: temp = this.BINOP((n, m) => n * m ); break;
-            case DIV: temp = this.BINOP((n, m) => n / m ); break;
-            case MOD: temp = this.BINOP((n, m) => n % m ); break;
+            case 'NEG' : temp = this.UNOP((x) => -x); break;
+            case 'ADD' : temp = this.BINOP((n, m) => n + m ); break;
+            case 'SUB' : temp = this.BINOP((n, m) => n - m ); break;
+            case 'MUL' : temp = this.BINOP((n, m) => n * m ); break;
+            case 'DIV' : temp = this.BINOP((n, m) => n / m ); break;
+            case 'MOD' : temp = this.BINOP((n, m) => n % m ); break;
             // ----------------------------------------------
             // comparison ...
             // ----------------------------------------------
-            case EQ: temp = this.BINOP((n, m) => n == m ? TRUE : FALSE); break;
-            case NE: temp = this.BINOP((n, m) => n != m ? TRUE : FALSE); break;
-            case LT: temp = this.BINOP((n, m) => n <  m ? TRUE : FALSE); break;
-            case LE: temp = this.BINOP((n, m) => n <= m ? TRUE : FALSE); break;
-            case GT: temp = this.BINOP((n, m) => n >  m ? TRUE : FALSE); break;
-            case GE: temp = this.BINOP((n, m) => n >= m ? TRUE : FALSE); break;
+            case 'EQ' : temp = this.BINOP((n, m) => n == m ? TRUE : FALSE); break;
+            case 'NE' : temp = this.BINOP((n, m) => n != m ? TRUE : FALSE); break;
+            case 'LT' : temp = this.BINOP((n, m) => n <  m ? TRUE : FALSE); break;
+            case 'LE' : temp = this.BINOP((n, m) => n <= m ? TRUE : FALSE); break;
+            case 'GT' : temp = this.BINOP((n, m) => n >  m ? TRUE : FALSE); break;
+            case 'GE' : temp = this.BINOP((n, m) => n >= m ? TRUE : FALSE); break;
             // ----------------------------------------------
             // logical ...
             // ----------------------------------------------
-            case NOT: temp = this.UNOP((x) => x ? TRUE : FALSE); break;
-            case AND: temp = this.BINOP((n, m) => n && m ? TRUE : FALSE); break;
-            case OR:  temp = this.BINOP((n, m) => n || m ? TRUE : FALSE); break;
+            case 'NOT' : temp = this.UNOP((x) => x ? TRUE : FALSE); break;
+            case 'AND' : temp = this.BINOP((n, m) => n && m ? TRUE : FALSE); break;
+            case 'OR'  : temp = this.BINOP((n, m) => n || m ? TRUE : FALSE); break;
             // ----------------------------------------------
             default:
                 // if we don't know the op, then we should halt and complain!
-                st = ERR;
+                st = 'ERR';
                 break;
             }
             break;
         default:
             // if we don't know the state, then we should halt and complain!
-            st = ERR;
+            st = 'ERR';
             break;
         }
 

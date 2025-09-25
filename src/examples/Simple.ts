@@ -1,4 +1,5 @@
 
+import { Bytecode } from '../machines/Strand/Bytecode'
 import {
     SCAN, COMM, JUMP, HALT, ERR,
     PUSH, DUP, POP, SWAP, ROT,
@@ -8,10 +9,7 @@ import {
     GET, PUT,
     EQZ, ANY,
     ___, TRUE, FALSE,
-
-    Bytecode,
-} from '../ISA'
-
+} from '../machines/Tools/Assembly'
 
 // result should be 2 -> 256 by powers of 2
 export const powersOfTwo = new Bytecode(
